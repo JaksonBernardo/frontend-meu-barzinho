@@ -9,6 +9,16 @@ import { Component } from '@angular/core';
         <div class="footer-content">
           <div class="footer-brand">
             <div class="logo">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-logo">
+                <!-- Espuma -->
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8a2 2 0 0 1 2-2a2.5 2.5 0 0 1 4.8-.7A2 2 0 1 1 16 9H7Z" />
+                <!-- Copo -->
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 9h8l-1 9a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2L8 9Z" />
+                <!-- Alça -->
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 10h1a2 2 0 0 1 0 4h-1" />
+                <!-- Detalhes -->
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 12v4M13 12v4" />
+              </svg>
               <span>Meu Barzinho</span>
             </div>
             <p>Simplificando a gestão de pequenos bares e snack shops com tecnologia e clareza.</p>
@@ -29,7 +39,7 @@ import { Component } from '@angular/core';
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2026 Meu Barzinho. Todos os direitos reservados.</p>
+          <p>&copy; 2024 Meu Barzinho. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>
