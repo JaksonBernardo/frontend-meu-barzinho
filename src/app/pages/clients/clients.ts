@@ -141,9 +141,14 @@ import { AuthService } from '../../services/auth';
                 <td>{{ client.email }}</td>
                 <td>{{ client.whatsapp }}</td>
                 <td>
-                  <button class="btn-icon">
+                  <button class="btn-icon" (click)="editClient(client)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                  </button>
+                  <button class="btn-icon" (click)="deleteClient(client.id!)">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="color: #e53e3e;">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.12-2.212a48.625 48.625 0 0 0-6.76 0c-1.21.048-2.12 1.032-2.12 2.212v.916m7.5 0" />
                     </svg>
                   </button>
                 </td>
@@ -158,11 +163,38 @@ import { AuthService } from '../../services/auth';
         </div>
       </main>
 
+      <!-- Modal de Confirmação de Deleção -->
+      <div class="modal-overlay" *ngIf="clientToDelete()">
+        <div class="modal">
+          <header>
+            <h2>Confirmar Exclusão</h2>
+            <button class="btn-close" (click)="cancelDelete()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </header>
+
+          <p>Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.</p>
+
+          <div class="error-message" *ngIf="errorMessage()">
+            {{ errorMessage() }}
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+            <button type="button" class="btn-primary" style="background: #e53e3e;" (click)="confirmDelete()" [disabled]="loading()">
+              {{ loading() ? 'Deletando...' : 'Deletar Cliente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal de Criação -->
       <div class="modal-overlay" *ngIf="showModal()">
         <div class="modal">
           <header>
-            <h2>Cadastrar Novo Cliente</h2>
+            <h2>{{ editingClientId() ? 'Editar Cliente' : 'Cadastrar Novo Cliente' }}</h2>
             <button class="btn-close" (click)="closeModal()">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -211,10 +243,14 @@ import { AuthService } from '../../services/auth';
               {{ errorMessage() }}
             </div>
 
+            <div class="success-message" *ngIf="successMessage()" style="margin-top: 1rem; color: #38a169; font-size: 0.875rem; font-weight: 500;">
+              {{ successMessage() }}
+            </div>
+
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
               <button type="submit" class="btn-primary" [disabled]="clientForm.invalid || loading()">
-                {{ loading() ? 'Salvando...' : 'Salvar Cliente' }}
+                {{ loading() ? 'Salvando...' : (editingClientId() ? 'Atualizar Cliente' : 'Salvar Cliente') }}
               </button>
             </div>
           </form>
@@ -288,8 +324,11 @@ export class ClientsComponent implements OnInit {
 
   clients = signal<Client[]>([]);
   showModal = signal(false);
+  clientToDelete = signal<number | null>(null);
+  editingClientId = signal<number | null>(null);
   loading = signal(false);
   errorMessage = signal('');
+  successMessage = signal('');
   estoqueOpen = signal(false);
   user = this.authService.user;
 
@@ -324,9 +363,16 @@ export class ClientsComponent implements OnInit {
     this.estoqueOpen.update(v => !v);
   }
 
-  openModal() {
+  openModal(client?: Client) {
     this.showModal.set(true);
     this.errorMessage.set('');
+    if (client) {
+      this.editingClientId.set(client.id || null);
+      this.clientForm.patchValue(client);
+    } else {
+      this.editingClientId.set(null);
+      this.clientForm.reset({ type_client: '', company_id: this.user()?.company_id });
+    }
   }
 
   closeModal() {
@@ -349,7 +395,13 @@ export class ClientsComponent implements OnInit {
     });
 
     try {
-      await this.clientService.createClient(formData);
+      if (this.editingClientId()) {
+        await this.clientService.updateClient(this.editingClientId()!, formData);
+        this.successMessage.set('Cliente atualizado com sucesso!');
+        setTimeout(() => this.successMessage.set(''), 3000);
+      } else {
+        await this.clientService.createClient(formData);
+      }
       await this.loadClients();
       this.closeModal();
     } catch (error: any) {
@@ -357,6 +409,36 @@ export class ClientsComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async deleteClient(clientId: number) {
+    this.clientToDelete.set(clientId);
+  }
+
+  async confirmDelete() {
+    const clientId = this.clientToDelete();
+    if (!clientId) return;
+
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    try {
+      await this.clientService.deleteClient(clientId);
+      await this.loadClients();
+      this.cancelDelete();
+    } catch (error: any) {
+      this.errorMessage.set(error || 'Erro ao deletar cliente');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  cancelDelete() {
+    this.clientToDelete.set(null);
+  }
+
+  editClient(client: Client) {
+    this.openModal(client);
   }
 
   async onLogout() {

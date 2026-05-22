@@ -58,4 +58,40 @@ export class ClientService {
       throw error.error?.detail || 'Erro ao carregar clientes';
     }
   }
+
+  async deleteClient(clientId: number): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete<void>(`${this.apiUrl}/api/v1/clients/${clientId}`, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao deletar cliente';
+    }
+  }
+
+  async getClient(clientId: number): Promise<Client> {
+    try {
+      return await firstValueFrom(
+        this.http.get<Client>(`${this.apiUrl}/api/v1/clients/${clientId}`, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao carregar cliente';
+    }
+  }
+
+  async updateClient(clientId: number, clientData: Partial<Client>): Promise<Client> {
+    try {
+      return await firstValueFrom(
+        this.http.patch<Client>(`${this.apiUrl}/api/v1/clients/${clientId}`, clientData, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao atualizar cliente';
+    }
+  }
 }
