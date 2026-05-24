@@ -141,7 +141,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
   `,
   styles: [`
     .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 280px; }
+    .content { flex: 1; padding: 3rem; margin-left: 320px; }
     .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     h1 { font-size: 2rem; font-weight: 800; color: #1a202c; margin-bottom: 0.5rem; }
     .content-header p { color: #718096; }

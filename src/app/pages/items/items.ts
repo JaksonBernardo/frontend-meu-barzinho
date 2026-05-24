@@ -145,7 +145,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
   `,
   styles: [`
     .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 280px; }
+    .content { flex: 1; padding: 3rem; margin-left: 320px; }
     .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     h1 { font-size: 2rem; font-weight: 800; color: #1a202c; margin-bottom: 0.5rem; }
     .content-header p { color: #718096; }
@@ -179,7 +179,19 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     .form-group input:focus { outline: none; border-color: #3182ce; ring: 2px solid #ebf8ff; }
     
     .autocomplete-container { position: relative; }
-    .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; z-index: 10; max-height: 200px; overflow-y: auto; }
+    .suggestions { 
+      position: absolute; 
+      top: calc(100% + 1.5rem); 
+      left: 0; 
+      right: 0; 
+      background: white; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 0.5rem; 
+      z-index: 1001; 
+      max-height: 200px; 
+      overflow-y: auto; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
     .suggestions div { padding: 0.75rem; cursor: pointer; }
     .suggestions div:hover { background: #f7fafc; }
 

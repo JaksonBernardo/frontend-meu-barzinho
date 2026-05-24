@@ -122,6 +122,13 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
   - `company_id` (int, obrigatório)
 - **Resposta:** `ExitPublic`
 
+### Relatório de Movimentação de Estoque
+- **Rota:** `GET /api/v1/stock/report/`
+- **Query Params:**
+  - `start_date` (date: YYYY-MM-DD, opcional)
+  - `end_date` (date: YYYY-MM-DD, opcional)
+- **Resposta:** `StockReport` (items, total, limit, offset)
+
 ---
 
 ## Itens (Produtos)
@@ -150,28 +157,64 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
 
 ### Criar Pedido
 - **Rota:** `POST /api/v1/orders/`
-- **Corpo da Requisição:**
-  - `number` (int, obrigatório)
-  - `description` (string, opcional)
-  - `status` (enum: `ABERTO`, `PAGO`, `CANCELADO`, default: `ABERTO`)
-  - `type_discount` (enum: `FIXO`, `PERCENTUAL`, default: `FIXO`)
-  - `discount` (decimal, default: 0.00)
-  - `payment_form` (enum: `DINHEIRO`, `PIX`, `DEBITO`, `CREDITO`, obrigatório)
-  - `company_id` (int, obrigatório)
-- **Resposta:** `OrderPublic`
+- **Exemplo de JSON (Request):**
+  ```json
+  {
+    "number": 101,
+    "description": "Pedido de balcão",
+    "status": "ABERTO",
+    "type_discount": "FIXO",
+    "discount": 5.00,
+    "payment_form": "PIX",
+    "company_id": 1
+  }
+  ```
+- **Exemplo de JSON (Response - OrderPublic):**
+  ```json
+  {
+    "id": 1,
+    "number": 101,
+    "description": "Pedido de balcão",
+    "status": "ABERTO",
+    "type_discount": "FIXO",
+    "discount": "5.00",
+    "payment_form": "PIX",
+    "company_id": 1,
+    "created_at": "2026-05-24T10:00:00Z",
+    "updated_at": "2026-05-24T10:00:00Z",
+    "order_items": []
+  }
+  ```
 
 ### Atualizar Status do Pedido
 - **Rota:** `PATCH /api/v1/orders/{order_id}/status`
-- **Corpo da Requisição:**
-  - `status` (enum: `ABERTO`, `PAGO`, `CANCELADO`, obrigatório)
+- **Exemplo de JSON (Request):**
+  ```json
+  {
+    "status": "PAGO"
+  }
+  ```
 
 ### Adicionar Item ao Pedido
 - **Rota:** `POST /api/v1/orders/{order_id}/items`
-- **Corpo da Requisição:**
-  - `item_id` (int, obrigatório)
-  - `qtd` (int, min: 1, obrigatório)
-  - `price` (decimal, opcional: se nulo, usa o preço do item)
-
+- **Exemplo de JSON (Request):**
+  ```json
+  {
+    "item_id": 1,
+    "qtd": 2,
+    "price": 10.50
+  }
+  ```
+- **Exemplo de JSON (Response - OrderItemPublic):**
+  ```json
+  {
+    "id": 10,
+    "order_id": 1,
+    "item_id": 1,
+    "qtd": 2,
+    "price": "10.50"
+  }
+  ```
 ---
 
 ## Usuários

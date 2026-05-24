@@ -78,18 +78,25 @@ import { AuthService } from '../../services/auth';
             </div>
 
             <div class="nav-sub-items" *ngIf="estoqueOpen()">
-              <div class="nav-sub-item">
+              <div class="nav-sub-item" routerLink="/stock/entries" [class.active]="activePage === 'entries'">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Entradas
               </div>
 
-              <div class="nav-sub-item">
+              <div class="nav-sub-item" routerLink="/stock/exits" [class.active]="activePage === 'exits'">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
                 </svg>
                 Saídas
+              </div>
+
+              <div class="nav-sub-item" routerLink="/stock/report" [class.active]="activePage === 'report'">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+                </svg>
+                Movimentações
               </div>
             </div>
           </div>

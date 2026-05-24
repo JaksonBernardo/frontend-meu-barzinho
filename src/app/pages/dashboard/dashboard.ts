@@ -44,7 +44,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     .content {
       flex: 1;
       padding: 3rem;
-      margin-left: 280px;
+      margin-left: 320px;
     }
     h1 {
       font-size: 2rem;
