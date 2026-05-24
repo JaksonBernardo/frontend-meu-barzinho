@@ -141,7 +141,8 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
 - **Query Params:**
   - `limit` (int, default: 10, min: 1, max: 20)
   - `offset` (int, default: 0, min: 0)
-- **Resposta:** `ItemList`
+  - `search` (string, opcional): Filtra por nome (case-insensitive).
+- **Resposta:** `ItemList` (items, total, limit, offset, search)
 
 ---
 
