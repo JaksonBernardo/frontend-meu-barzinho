@@ -2,11 +2,11 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ClientService, Client, TypeClient } from '../../services/client';
+import { CategoryService, Category } from '../../services/category';
 import { AuthService } from '../../services/auth';
 
 @Component({
-  selector: 'app-clients',
+  selector: 'app-categories',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
@@ -37,7 +37,7 @@ import { AuthService } from '../../services/auth';
             Comandas
           </div>
 
-          <div class="nav-item active">
+          <div class="nav-item" routerLink="/clients">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
             </svg>
@@ -51,7 +51,7 @@ import { AuthService } from '../../services/auth';
             Produtos
           </div>
 
-          <div class="nav-item" routerLink="/categories">
+          <div class="nav-item active" routerLink="/categories">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a2.25 2.25 0 0 0 3.182 0l4.318-4.318a2.25 2.25 0 0 0 0-3.182L11.159 3.659A2.25 2.25 0 0 0 9.568 3Z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
@@ -106,50 +106,38 @@ import { AuthService } from '../../services/auth';
       <main class="content">
         <header class="content-header">
           <div>
-            <h1>Clientes</h1>
-            <p>Gerencie os clientes do seu barzinho.</p>
+            <h1>Categorias</h1>
+            <p>Gerencie as categorias de produtos do seu barzinho.</p>
           </div>
           <div style="display: flex; gap: 1rem;">
-            <input type="text" placeholder="Pesquisar cliente..." (input)="onSearch($event)" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+            <input type="text" placeholder="Pesquisar categoria..." (input)="onSearch($event)" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
             <button class="btn-primary" (click)="openModal()">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Novo Cliente
+              Nova Categoria
             </button>
           </div>
         </header>
 
         <div class="table-container">
-          <table *ngIf="clients().length > 0; else emptyState">
+          <table *ngIf="categories().length > 0; else emptyState">
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Tipo</th>
-                <th>CPF/CNPJ</th>
-                <th>E-mail</th>
-                <th>WhatsApp</th>
-                <th>Ações</th>
+                <th style="width: 100px;">Ações</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let client of clients()">
-                <td>{{ client.name }}</td>
+              <tr *ngFor="let category of categories()">
+                <td>{{ category.name }}</td>
                 <td>
-                  <span class="badge" [class.badge-pf]="client.type_client === 'PF'" [class.badge-pj]="client.type_client === 'PJ'">
-                    {{ client.type_client }}
-                  </span>
-                </td>
-                <td>{{ client.document }}</td>
-                <td>{{ client.email }}</td>
-                <td>{{ client.whatsapp }}</td>
-                <td>
-                  <button class="btn-icon" (click)="editClient(client)">
+                  <button class="btn-icon" (click)="editCategory(category)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                     </svg>
                   </button>
-                  <button class="btn-icon" (click)="deleteClient(client.id!)">
+                  <button class="btn-icon" (click)="deleteCategory(category.id!)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="color: #e53e3e;">
                       <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.12-2.212a48.625 48.625 0 0 0-6.76 0c-1.21.048-2.12 1.032-2.12 2.212v.916m7.5 0" />
                     </svg>
@@ -160,22 +148,22 @@ import { AuthService } from '../../services/auth';
           </table>
           <ng-template #emptyState>
             <div class="empty-state">
-              <p>Nenhum cliente encontrado.</p>
+              <p>Nenhuma categoria encontrada.</p>
             </div>
           </ng-template>
 
           <div class="pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid #e2e8f0; background: #f7fafc;">
-            <span style="font-size: 0.875rem; color: #718096;">Total: {{ totalClients() }}</span>
+            <span style="font-size: 0.875rem; color: #718096;">Total: {{ totalCategories() }}</span>
             <div style="display: flex; gap: 0.5rem;">
               <button class="btn-secondary" (click)="prevPage()" [disabled]="offset() === 0">Anterior</button>
-              <button class="btn-secondary" (click)="nextPage()" [disabled]="offset() + limit() >= totalClients()">Próximo</button>
+              <button class="btn-secondary" (click)="nextPage()" [disabled]="offset() + limit() >= totalCategories()">Próximo</button>
             </div>
           </div>
         </div>
       </main>
 
       <!-- Modal de Confirmação de Deleção -->
-      <div class="modal-overlay" *ngIf="clientToDelete()">
+      <div class="modal-overlay" *ngIf="categoryToDelete()">
         <div class="modal">
           <header>
             <h2>Confirmar Exclusão</h2>
@@ -186,7 +174,7 @@ import { AuthService } from '../../services/auth';
             </button>
           </header>
 
-          <p>Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.</p>
+          <p>Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.</p>
 
           <div class="error-message" *ngIf="errorMessage()">
             {{ errorMessage() }}
@@ -195,7 +183,7 @@ import { AuthService } from '../../services/auth';
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
             <button type="button" class="btn-primary" style="background: #e53e3e;" (click)="confirmDelete()" [disabled]="loading()">
-              {{ loading() ? 'Deletando...' : 'Deletar Cliente' }}
+              {{ loading() ? 'Deletando...' : 'Deletar Categoria' }}
             </button>
           </div>
         </div>
@@ -205,7 +193,7 @@ import { AuthService } from '../../services/auth';
       <div class="modal-overlay" *ngIf="showModal()">
         <div class="modal">
           <header>
-            <h2>{{ editingClientId() ? 'Editar Cliente' : 'Cadastrar Novo Cliente' }}</h2>
+            <h2>{{ editingCategoryId() ? 'Editar Categoria' : 'Cadastrar Nova Categoria' }}</h2>
             <button class="btn-close" (click)="closeModal()">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -213,40 +201,11 @@ import { AuthService } from '../../services/auth';
             </button>
           </header>
 
-          <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+          <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
             <div class="form-grid">
-              <div class="form-group">
-                <label>Nome Completo</label>
-                <input type="text" formControlName="name" placeholder="Ex: João da Silva">
-              </div>
-
-              <div class="form-group">
-                <label>Tipo de Cliente</label>
-                <select formControlName="type_client">
-                  <option value="">Selecione...</option>
-                  <option value="PF">Pessoa Física (PF)</option>
-                  <option value="PJ">Pessoa Jurídica (PJ)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Documento (CPF/CNPJ)</label>
-                <input type="text" formControlName="document" placeholder="Apenas números">
-              </div>
-
-              <div class="form-group">
-                <label>E-mail</label>
-                <input type="email" formControlName="email" placeholder="exemplo@email.com">
-              </div>
-
-              <div class="form-group">
-                <label>WhatsApp</label>
-                <input type="text" formControlName="whatsapp" placeholder="(00) 00000-0000">
-              </div>
-
               <div class="form-group full-width">
-                <label>Endereço</label>
-                <input type="text" formControlName="address" placeholder="Rua, número, bairro...">
+                <label>Nome da Categoria</label>
+                <input type="text" formControlName="name" placeholder="Ex: Bebidas, Comidas, etc.">
               </div>
             </div>
 
@@ -260,8 +219,8 @@ import { AuthService } from '../../services/auth';
 
             <div class="modal-footer">
               <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-              <button type="submit" class="btn-primary" [disabled]="clientForm.invalid || loading()">
-                {{ loading() ? 'Salvando...' : (editingClientId() ? 'Atualizar Cliente' : 'Salvar Cliente') }}
+              <button type="submit" class="btn-primary" [disabled]="categoryForm.invalid || loading()">
+                {{ loading() ? 'Salvando...' : (editingCategoryId() ? 'Atualizar Categoria' : 'Salvar Categoria') }}
               </button>
             </div>
           </form>
@@ -302,9 +261,6 @@ import { AuthService } from '../../services/auth';
     table { width: 100%; border-collapse: collapse; }
     th { background: #f7fafc; padding: 1rem; text-align: left; font-size: 0.875rem; color: #718096; border-bottom: 1px solid #e2e8f0; }
     td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #1a202c; }
-    .badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 700; }
-    .badge-pf { background: #ebf8ff; color: #3182ce; }
-    .badge-pj { background: #fefcbf; color: #b7791f; }
     .btn-icon { background: none; border: none; color: #718096; cursor: pointer; padding: 0.25rem; }
     .btn-icon:hover { color: #3182ce; }
     .btn-icon svg { width: 1.25rem; height: 1.25rem; }
@@ -312,87 +268,82 @@ import { AuthService } from '../../services/auth';
 
     /* Modal Styles */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: white; border-radius: 1rem; width: 600px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal { background: white; border-radius: 1rem; width: 500px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     .modal header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     .btn-close { background: none; border: none; color: #a0aec0; cursor: pointer; }
     .btn-close svg { width: 1.5rem; height: 1.5rem; }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .form-group.full-width { grid-column: span 2; }
+    .form-group.full-width { grid-column: span 1; }
     .form-group label { font-size: 0.875rem; font-weight: 600; color: #4a5568; }
-    .form-group input, .form-group select { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; }
+    .form-group input { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; }
     .form-group input:focus { outline: none; border-color: #3182ce; ring: 2px solid #ebf8ff; }
     
     .error-message { margin-top: 1rem; color: #e53e3e; font-size: 0.875rem; font-weight: 500; }
     .modal-footer { margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; }
   `]
 })
-export class ClientsComponent implements OnInit {
+export class CategoriesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly clientService = inject(ClientService);
+  private readonly categoryService = inject(CategoryService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  clients = signal<Client[]>([]);
-  totalClients = signal(0);
+  categories = signal<Category[]>([]);
+  totalCategories = signal(0);
   limit = signal(10);
   offset = signal(0);
   searchTerm = signal('');
   showModal = signal(false);
-  clientToDelete = signal<number | null>(null);
-  editingClientId = signal<number | null>(null);
+  categoryToDelete = signal<number | null>(null);
+  editingCategoryId = signal<number | null>(null);
   loading = signal(false);
   errorMessage = signal('');
   successMessage = signal('');
   estoqueOpen = signal(false);
   user = this.authService.user;
 
-  clientForm: FormGroup = this.fb.group({
+  categoryForm: FormGroup = this.fb.group({
     name: ['', [Validators.required]],
-    type_client: [''],
-    document: [''],
-    email: ['', [Validators.email]],
-    whatsapp: [''],
-    address: [''],
     company_id: [0]
   });
 
   ngOnInit() {
-    this.loadClients();
+    this.loadCategories();
     const currentUser = this.user();
     if (currentUser) {
-      this.clientForm.patchValue({ company_id: currentUser.company_id });
+      this.categoryForm.patchValue({ company_id: currentUser.company_id });
     }
   }
 
-  async loadClients() {
+  async loadCategories() {
     try {
-      const response = await this.clientService.listClients(this.limit(), this.offset(), this.searchTerm());
-      this.clients.set(response.items);
-      this.totalClients.set(response.total);
+      const response = await this.categoryService.listCategories(this.limit(), this.offset(), this.searchTerm());
+      this.categories.set(response.items);
+      this.totalCategories.set(response.total);
     } catch (error) {
-      console.error('Erro ao carregar clientes', error);
+      console.error('Erro ao carregar categorias', error);
     }
   }
 
   onSearch(event: any) {
     this.searchTerm.set(event.target.value);
     this.offset.set(0); // Reset pagination
-    this.loadClients();
+    this.loadCategories();
   }
 
   nextPage() {
-    if (this.offset() + this.limit() < this.totalClients()) {
+    if (this.offset() + this.limit() < this.totalCategories()) {
       this.offset.update(v => v + this.limit());
-      this.loadClients();
+      this.loadCategories();
     }
   }
 
   prevPage() {
     if (this.offset() >= this.limit()) {
       this.offset.update(v => v - this.limit());
-      this.loadClients();
+      this.loadCategories();
     }
   }
 
@@ -400,46 +351,40 @@ export class ClientsComponent implements OnInit {
     this.estoqueOpen.update(v => !v);
   }
 
-  openModal(client?: Client) {
+  openModal(category?: Category) {
     this.showModal.set(true);
     this.errorMessage.set('');
-    if (client) {
-      this.editingClientId.set(client.id || null);
-      this.clientForm.patchValue(client);
+    if (category) {
+      this.editingCategoryId.set(category.id || null);
+      this.categoryForm.patchValue(category);
     } else {
-      this.editingClientId.set(null);
-      this.clientForm.reset({ type_client: '', company_id: this.user()?.company_id });
+      this.editingCategoryId.set(null);
+      this.categoryForm.reset({ company_id: this.user()?.company_id });
     }
   }
 
   closeModal() {
     this.showModal.set(false);
-    this.clientForm.reset({ type_client: '', company_id: this.user()?.company_id });
+    this.categoryForm.reset({ company_id: this.user()?.company_id });
   }
 
   async onSubmit() {
-    if (this.clientForm.invalid) return;
+    if (this.categoryForm.invalid) return;
 
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const formData = { ...this.clientForm.value };
-    // Remove empty strings to send null to the backend
-    Object.keys(formData).forEach(key => {
-      if (formData[key] === '') {
-        formData[key] = null;
-      }
-    });
+    const formData = { ...this.categoryForm.value };
 
     try {
-      if (this.editingClientId()) {
-        await this.clientService.updateClient(this.editingClientId()!, formData);
-        this.successMessage.set('Cliente atualizado com sucesso!');
+      if (this.editingCategoryId()) {
+        await this.categoryService.updateCategory(this.editingCategoryId()!, formData);
+        this.successMessage.set('Categoria atualizada com sucesso!');
         setTimeout(() => this.successMessage.set(''), 3000);
       } else {
-        await this.clientService.createClient(formData);
+        await this.categoryService.createCategory(formData);
       }
-      await this.loadClients();
+      await this.loadCategories();
       this.closeModal();
     } catch (error: any) {
       this.errorMessage.set(error);
@@ -448,34 +393,34 @@ export class ClientsComponent implements OnInit {
     }
   }
 
-  async deleteClient(clientId: number) {
-    this.clientToDelete.set(clientId);
+  async deleteCategory(categoryId: number) {
+    this.categoryToDelete.set(categoryId);
   }
 
   async confirmDelete() {
-    const clientId = this.clientToDelete();
-    if (!clientId) return;
+    const categoryId = this.categoryToDelete();
+    if (!categoryId) return;
 
     this.loading.set(true);
     this.errorMessage.set('');
 
     try {
-      await this.clientService.deleteClient(clientId);
-      await this.loadClients();
+      await this.categoryService.deleteCategory(categoryId);
+      await this.loadCategories();
       this.cancelDelete();
     } catch (error: any) {
-      this.errorMessage.set(error || 'Erro ao deletar cliente');
+      this.errorMessage.set(error || 'Erro ao deletar categoria');
     } finally {
       this.loading.set(false);
     }
   }
 
   cancelDelete() {
-    this.clientToDelete.set(null);
+    this.categoryToDelete.set(null);
   }
 
-  editClient(client: Client) {
-    this.openModal(client);
+  editCategory(category: Category) {
+    this.openModal(category);
   }
 
   async onLogout() {
