@@ -46,11 +46,13 @@ export class ClientService {
     }
   }
 
-  async listClients(limit: number = 10, offset: number = 0): Promise<ClientListResponse> {
+  async listClients(limit: number = 10, offset: number = 0, search?: string): Promise<ClientListResponse> {
     try {
+      const params: any = { limit, offset };
+      if (search) params.search = search;
       return await firstValueFrom(
         this.http.get<ClientListResponse>(`${this.apiUrl}/api/v1/clients/`, {
-          params: { limit, offset },
+          params,
           withCredentials: true
         })
       );

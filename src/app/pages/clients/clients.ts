@@ -109,12 +109,15 @@ import { AuthService } from '../../services/auth';
             <h1>Clientes</h1>
             <p>Gerencie os clientes do seu barzinho.</p>
           </div>
-          <button class="btn-primary" (click)="openModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Novo Cliente
-          </button>
+          <div style="display: flex; gap: 1rem;">
+            <input type="text" placeholder="Pesquisar cliente..." (input)="onSearch($event)" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+            <button class="btn-primary" (click)="openModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Novo Cliente
+            </button>
+          </div>
         </header>
 
         <div class="table-container">
@@ -160,6 +163,14 @@ import { AuthService } from '../../services/auth';
               <p>Nenhum cliente encontrado.</p>
             </div>
           </ng-template>
+
+          <div class="pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid #e2e8f0; background: #f7fafc;">
+            <span style="font-size: 0.875rem; color: #718096;">Total: {{ totalClients() }}</span>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" (click)="prevPage()" [disabled]="offset() === 0">Anterior</button>
+              <button class="btn-secondary" (click)="nextPage()" [disabled]="offset() + limit() >= totalClients()">Próximo</button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -272,6 +283,7 @@ import { AuthService } from '../../services/auth';
     .chevron.open { transform: rotate(180deg); }
     .nav-sub-items { padding-left: 1rem; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem; }
     .nav-sub-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; border-radius: 0.5rem; color: #718096; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
+    .nav-sub-item svg { width: 1.25rem; height: 1.25rem; }
     .sidebar-footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
     .btn-logout { display: flex; align-items: center; gap: 0.75rem; background: none; border: none; color: #e53e3e; font-weight: 600; cursor: pointer; width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; }
     .btn-logout svg { width: 1.25rem; height: 1.25rem; }
@@ -323,6 +335,10 @@ export class ClientsComponent implements OnInit {
   private readonly router = inject(Router);
 
   clients = signal<Client[]>([]);
+  totalClients = signal(0);
+  limit = signal(10);
+  offset = signal(0);
+  searchTerm = signal('');
   showModal = signal(false);
   clientToDelete = signal<number | null>(null);
   editingClientId = signal<number | null>(null);
@@ -352,10 +368,31 @@ export class ClientsComponent implements OnInit {
 
   async loadClients() {
     try {
-      const response = await this.clientService.listClients();
+      const response = await this.clientService.listClients(this.limit(), this.offset(), this.searchTerm());
       this.clients.set(response.items);
+      this.totalClients.set(response.total);
     } catch (error) {
       console.error('Erro ao carregar clientes', error);
+    }
+  }
+
+  onSearch(event: any) {
+    this.searchTerm.set(event.target.value);
+    this.offset.set(0); // Reset pagination
+    this.loadClients();
+  }
+
+  nextPage() {
+    if (this.offset() + this.limit() < this.totalClients()) {
+      this.offset.update(v => v + this.limit());
+      this.loadClients();
+    }
+  }
+
+  prevPage() {
+    if (this.offset() >= this.limit()) {
+      this.offset.update(v => v - this.limit());
+      this.loadClients();
     }
   }
 
