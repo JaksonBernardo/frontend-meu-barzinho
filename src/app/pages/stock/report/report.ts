@@ -40,32 +40,69 @@ interface DailyData {
         </div>
 
         <section class="chart-container" *ngIf="dailyData().length > 0">
-          <h2>Estoque (R$)</h2>
+          <div class="chart-header">
+            <h2>Movimentação Financeira</h2>
+            <div class="legend">
+              <span class="legend-item"><span class="box entry"></span> Entradas</span>
+              <span class="legend-item"><span class="box exit"></span> Saídas</span>
+            </div>
+          </div>
+          
           <div class="chart-wrapper">
+            <div class="y-axis">
+              <span>{{ maxVal() | currency:'BRL':'symbol':'1.0-0' }}</span>
+              <span>{{ (maxVal() * 0.75) | currency:'BRL':'symbol':'1.0-0' }}</span>
+              <span>{{ (maxVal() * 0.5) | currency:'BRL':'symbol':'1.0-0' }}</span>
+              <span>{{ (maxVal() * 0.25) | currency:'BRL':'symbol':'1.0-0' }}</span>
+              <span>R$ 0</span>
+            </div>
+            
             <div class="chart-area">
-              <div class="y-axis">
-                <span>{{ maxVal() | currency:'BRL':'symbol':'1.0-0' }}</span>
-                <span>{{ (maxVal()/2) | currency:'BRL':'symbol':'1.0-0' }}</span>
-                <span>R$ 0</span>
-              </div>
-              <div class="bars-container">
+              <div class="grid-lines">
                 <div class="grid-line" style="bottom: 0%"></div>
+                <div class="grid-line" style="bottom: 25%"></div>
                 <div class="grid-line" style="bottom: 50%"></div>
+                <div class="grid-line" style="bottom: 75%"></div>
                 <div class="grid-line" style="bottom: 100%"></div>
-                
-                <div class="day-bar" *ngFor="let day of dailyData()">
-                  <div class="bar-pair">
-                    <div class="bar entry" [style.height.%]="getPercentage(day.entries)"></div>
-                    <div class="bar exit" [style.height.%]="getPercentage(day.exits)"></div>
+              </div>
+              
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="line-chart-svg">
+                <defs>
+                  <linearGradient id="entryGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#48bb78" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#48bb78" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="exitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#f56565" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#f56565" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Áreas -->
+                <path [attr.d]="entryArea()" fill="url(#entryGradient)" stroke="none"></path>
+                <path [attr.d]="exitArea()" fill="url(#exitGradient)" stroke="none"></path>
+
+                <!-- Linhas -->
+                <path [attr.d]="'M ' + entryPoints()" fill="none" stroke="#48bb78" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
+                <path [attr.d]="'M ' + exitPoints()" fill="none" stroke="#f56565" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
+              </svg>
+
+              <div class="points-overlay">
+                <div class="day-points" *ngFor="let day of dailyData(); let i = index" [style.left.%]="i * (100 / (dailyData().length - 1 || 1))">
+                  <div class="point entry" 
+                       [style.bottom.%]="getPercentage(day.entries)"
+                       [title]="'Entrada: ' + (day.entries | currency:'BRL')">
+                    <div class="tooltip">{{ day.entries | currency:'BRL' }}</div>
                   </div>
-                  <span class="day-label">{{ day.date }}</span>
+                  <div class="point exit" 
+                       [style.bottom.%]="getPercentage(day.exits)"
+                       [title]="'Saída: ' + (day.exits | currency:'BRL')">
+                    <div class="tooltip">{{ day.exits | currency:'BRL' }}</div>
+                  </div>
+                  <span class="day-label">{{ day.date.split('/')[0] }}/{{ day.date.split('/')[1] }}</span>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="legend">
-            <span class="legend-item"><span class="box entry"></span> Entradas</span>
-            <span class="legend-item"><span class="box exit"></span> Saídas</span>
           </div>
         </section>
 
@@ -116,25 +153,152 @@ interface DailyData {
     .stat-card h3 { font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem; }
     .stat-card .value { font-size: 1.5rem; font-weight: 700; color: #1a202c; }
     
-    .chart-container { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; }
-    .chart-wrapper { height: 300px; display: flex; flex-direction: column; }
-    .chart-area { display: flex; flex: 1; padding: 1rem; position: relative; }
-    .y-axis { display: flex; flex-direction: column; justify-content: space-between; height: 250px; font-size: 0.75rem; color: #718096; margin-right: 1rem; }
-    .bars-container { display: flex; flex: 1; justify-content: space-around; align-items: flex-end; position: relative; }
-    .grid-line { position: absolute; left: 0; right: 0; border-top: 1px solid #e2e8f0; }
-    .day-bar { display: flex; flex-direction: column; align-items: center; width: 40px; z-index: 1; }
-    .bar-pair { display: flex; gap: 2px; align-items: flex-end; height: 250px; width: 100%; }
-    .bar { width: 100%; border-radius: 2px 2px 0 0; }
-    .bar.entry { background: #38a169; }
-    .bar.exit { background: #e53e3e; }
-    .day-label { font-size: 0.75rem; color: #718096; margin-top: 0.5rem; }
-    .legend { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
-    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
-    .box { width: 12px; height: 12px; border-radius: 2px; }
-    .box.entry { background: #38a169; }
-    .box.exit { background: #e53e3e; }
+    .chart-container { 
+      background: white; 
+      padding: 2rem; 
+      border-radius: 1.5rem; 
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
+      margin-bottom: 2rem; 
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .chart-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin: 0;
+    }
+    .chart-wrapper { 
+      height: 350px; 
+      display: flex; 
+      gap: 1.5rem;
+    }
+    .y-axis { 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      height: 280px; 
+      font-size: 0.75rem; 
+      color: #a0aec0; 
+      text-align: right;
+      min-width: 60px;
+    }
+    .chart-area { 
+      flex: 1; 
+      position: relative; 
+      height: 280px;
+    }
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .grid-line { 
+      position: absolute; 
+      left: 0; 
+      right: 0; 
+      border-top: 1px dashed #edf2f7; 
+      width: 100%;
+    }
+    .line-chart-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .points-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .day-points {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .point {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid currentColor;
+      transform: translate(-50%, 50%);
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.2s;
+      z-index: 5;
+    }
+    .point.entry { color: #48bb78; }
+    .point.exit { color: #f56565; }
+    
+    .point:hover {
+      transform: translate(-50%, 50%) scale(1.5);
+      z-index: 10;
+    }
+    .tooltip {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #2d3748;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+      z-index: 10;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .point:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+    .day-label { 
+      position: absolute;
+      bottom: -30px;
+      transform: translateX(-50%);
+      font-size: 0.75rem; 
+      font-weight: 600;
+      color: #718096; 
+      white-space: nowrap;
+    }
+    .legend { 
+      display: flex; 
+      gap: 1.5rem; 
+    }
+    .legend-item { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      font-size: 0.875rem; 
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .box { width: 10px; height: 10px; border-radius: 2px; }
+    .box.entry { background: #48bb78; }
+    .box.exit { background: #f56565; }
 
-    .table-container { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
+    .table-container { 
+      background: white; 
+      border-radius: 1.5rem; 
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
+      overflow: hidden; 
+    }
     table { width: 100%; border-collapse: collapse; }
     th { background: #f7fafc; padding: 1rem; text-align: left; font-size: 0.875rem; color: #718096; border-bottom: 1px solid #e2e8f0; }
     td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #1a202c; }
@@ -174,6 +338,26 @@ export class ReportComponent implements OnInit {
   });
   
   maxVal = computed(() => Math.max(...this.dailyData().map(d => Math.max(d.entries, d.exits)), 1));
+
+  entryPoints = computed(() => this.generatePath('entries'));
+  exitPoints = computed(() => this.generatePath('exits'));
+  entryArea = computed(() => this.generateAreaPath('entries'));
+  exitArea = computed(() => this.generateAreaPath('exits'));
+
+  private generatePath(key: 'entries' | 'exits'): string {
+    const data = this.dailyData();
+    if (data.length === 0) return '';
+    const stepX = 100 / (data.length - 1 || 1);
+    return data.map((d, i) => `${i * stepX},${100 - this.getPercentage(d[key])}`).join(' L ');
+  }
+
+  private generateAreaPath(key: 'entries' | 'exits'): string {
+    const data = this.dailyData();
+    if (data.length === 0) return '';
+    const stepX = 100 / (data.length - 1 || 1);
+    const points = data.map((d, i) => `${i * stepX},${100 - this.getPercentage(d[key])}`).join(' L ');
+    return `M 0,100 L ${points} L 100,100 Z`;
+  }
 
   ngOnInit() {
     this.loadReport();
