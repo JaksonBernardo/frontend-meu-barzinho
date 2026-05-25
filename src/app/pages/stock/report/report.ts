@@ -105,7 +105,7 @@ interface DailyData {
   `,
   styles: [`
     .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 280px; }
+    .content { flex: 1; padding: 3rem; margin-left: 320px; }
     .content-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 2rem; font-weight: 800; color: #1a202c; }
     .filter-form { display: flex; gap: 1rem; align-items: center; }

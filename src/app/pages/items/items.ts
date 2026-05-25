@@ -10,7 +10,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
 @Component({
   selector: 'app-items',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, SidebarComponent],
+  imports: [CommonModule, ReactiveFormsModule, SidebarComponent],
   template: `
     <div class="dashboard-container">
       <app-sidebar activePage="items"></app-sidebar>

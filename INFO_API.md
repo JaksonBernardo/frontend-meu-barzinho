@@ -169,6 +169,7 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
     "company_id": 1
   }
   ```
+  *Nota: `payment_form` é opcional e tem como valor padrão "DINHEIRO".*
 - **Exemplo de JSON (Response - OrderPublic):**
   ```json
   {
@@ -211,10 +212,15 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
     "id": 10,
     "order_id": 1,
     "item_id": 1,
+    "item_name": "Cerveja Pilsen",
     "qtd": 2,
     "price": "10.50"
   }
   ```
+
+### Remover Item do Pedido
+- **Rota:** `DELETE /api/v1/orders/{order_id}/items/{order_item_id}`
+- **Status:** 204 No Content
 ---
 
 ## Usuários

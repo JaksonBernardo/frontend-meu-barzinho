@@ -8,6 +8,8 @@ import { ItemsComponent } from './pages/items/items';
 import { EntriesComponent } from './pages/stock/entries/entries';
 import { ExitsComponent } from './pages/stock/exits/exits';
 import { ReportComponent } from './pages/stock/report/report';
+import { OrdersComponent } from './pages/orders/orders';
+import { OrdersDetailComponent } from './pages/orders/detail/detail';
 import { authGuard } from './guards/auth';
 
 export const routes: Routes = [
@@ -46,6 +48,16 @@ export const routes: Routes = [
   {
     path: 'stock/report',
     component: ReportComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'orders',
+    component: OrdersComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'orders/:id',
+    component: OrdersDetailComponent,
     canActivate: [authGuard]
   }
 ];
