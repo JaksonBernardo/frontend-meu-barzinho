@@ -22,14 +22,14 @@ import { AuthService } from '../../services/auth';
         </header>
 
         <div class="orders-grid">
-          <div *ngFor="let order of orders()" class="order-card" (click)="goToDetail(order.id!)" style="cursor: pointer;">
+          <div *ngFor="let order of orders()" class="order-card" [class]="(order.status || 'aberto').toLowerCase()" (click)="goToDetail(order.id!)" style="cursor: pointer;">
             <div class="order-header">
               <span class="order-number">#{{ order.number }}</span>
               <span class="status-badge" [class]="(order.status || 'aberto').toLowerCase()">{{ order.status }}</span>
             </div>
             <p class="order-desc">{{ order.description }}</p>
             <div class="order-footer">
-              <span>{{ order.payment_form }}</span>
+              <span class="order-total">Total: {{ calculateOrderTotal(order) | currency:'BRL' }}</span>
             </div>
           </div>
         </div>
@@ -90,8 +90,11 @@ import { AuthService } from '../../services/auth';
     .btn-primary { background: #3182ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
     
     .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
-    .order-card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.2s; }
+    .order-card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: transform 0.2s; border-left: 8px solid #a0aec0; }
     .order-card:hover { transform: translateY(-5px); }
+    .order-card.aberto { border-left-color: #3182ce; }
+    .order-card.pago { border-left-color: #38a169; }
+    .order-card.cancelado { border-left-color: #e53e3e; }
     .modal header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
     .btn-close { background: none; border: none; font-size: 1.5rem; color: #a0aec0; cursor: pointer; padding: 0.5rem; transition: color 0.2s; }
     .btn-close:hover { color: #1a202c; }
@@ -150,6 +153,11 @@ export class OrdersComponent implements OnInit {
       this.modalMessage.set('Erro ao carregar comandas');
       this.showMessageModal.set(true);
     }
+  }
+
+  calculateOrderTotal(order: Order & { order_items?: any[] }): number {
+    const items = order.order_items || [];
+    return items.reduce((acc: number, item: any) => acc + (item.qtd * parseFloat(item.price)), 0);
   }
 
   goToDetail(orderId: number) {

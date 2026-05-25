@@ -181,6 +181,7 @@ Esta documentação detalha as rotas disponíveis na API para auxiliar no desenv
     "discount": "5.00",
     "payment_form": "PIX",
     "company_id": 1,
+    "total_value": "16.00",
     "created_at": "2026-05-24T10:00:00Z",
     "updated_at": "2026-05-24T10:00:00Z",
     "order_items": []

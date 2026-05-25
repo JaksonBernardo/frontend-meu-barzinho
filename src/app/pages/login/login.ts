@@ -287,7 +287,7 @@ export class LoginComponent {
         email: this.email,
         password: this.password
       });
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/orders']);
     } catch (error: any) {
       this.errorMessage.set(error);
     } finally {

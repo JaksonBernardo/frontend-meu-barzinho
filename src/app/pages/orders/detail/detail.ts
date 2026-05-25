@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SidebarComponent } from '../../../components/sidebar/sidebar';
 import { MessageModalComponent } from '../../../components/message-modal/message-modal';
@@ -13,6 +13,7 @@ import { ItemService, Item } from '../../../services/item';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterLink,
     SidebarComponent,
     MessageModalComponent
@@ -25,6 +26,9 @@ import { ItemService, Item } from '../../../services/item';
         <header class="page-header">
           <div>
             <h1>Comanda #{{ order()?.number }}</h1>
+            <span class="status-badge" [class]="(order()?.status || 'aberto').toLowerCase()">
+              {{ order()?.status }}
+            </span>
             <p class="subtitle">Gerencie os itens da comanda</p>
           </div>
           <a routerLink="/orders" class="btn-secondary">Voltar</a>
@@ -32,8 +36,8 @@ import { ItemService, Item } from '../../../services/item';
         
         <section class="summary-grid">
           <div class="summary-card total-card">
-            <span>Total sem desconto</span>
-            <strong>{{ orderTotal() | currency:'BRL' }}</strong>
+            <span>Total Final</span>
+            <strong>{{ finalTotal() | currency:'BRL' }}</strong>
           </div>
           <div class="summary-card">
             <span>Itens</span>
@@ -71,6 +75,7 @@ import { ItemService, Item } from '../../../services/item';
         <section class="items-section" *ngIf="order()">
           <div class="section-header items-header">
             <h2>Itens</h2>
+            <div class="items-total">{{ orderTotal() | currency:'BRL' }}</div>
           </div>
           <div class="table-wrapper">
             <table>
@@ -100,6 +105,36 @@ import { ItemService, Item } from '../../../services/item';
               </tbody>
             </table>
           </div>
+          
+          <div class="financial-summary">
+            <div class="discount-form">
+              <select [(ngModel)]="discountType">
+                <option value="FIXO">Desconto Fixo (R$)</option>
+                <option value="PERCENTUAL">Desconto (%)</option>
+              </select>
+              <input type="number" [(ngModel)]="discountValue" placeholder="Valor do desconto">
+            </div>
+            <div class="summary-totals">
+              <p>Subtotal: <span>{{ orderTotal() | currency:'BRL' }}</span></p>
+              <p>Desconto: <span>{{ calculatedDiscount() | currency:'BRL' }}</span></p>
+              <p class="final-total">Total: <span>{{ finalTotal() | currency:'BRL' }}</span></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="close-order-section" *ngIf="order()?.status === 'ABERTO'">
+          <div class="section-header">
+            <h2>Fechar Comanda</h2>
+          </div>
+          <div class="close-order-form">
+            <select [(ngModel)]="paymentMethod">
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="PIX">PIX</option>
+              <option value="DEBITO">Débito</option>
+              <option value="CREDITO">Crédito</option>
+            </select>
+            <button class="btn-success" (click)="closeOrder()">Fechar Comanda</button>
+          </div>
         </section>
       </main>
 
@@ -118,10 +153,18 @@ import { ItemService, Item } from '../../../services/item';
     </div>
   `,
   styles: [`
+    * { box-sizing: border-box; }
     .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
     .content { flex: 1; padding: 3rem; margin-left: 320px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .page-header h1 { font-size: 1.8rem; font-weight: 700; color: #1a202c; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .page-header h1 { font-size: 1.8rem; font-weight: 700; color: #1a202c; display: flex; align-items: center; gap: 1rem; }
+    .subtitle { font-size: 0.92rem; color: #6b7280; }
+    
+    .status-badge { font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 999px; text-transform: uppercase; }
+    .status-badge.aberto { background: #ebf8ff; color: #3182ce; }
+    .status-badge.pago { background: #f0fff4; color: #38a169; }
+    .status-badge.cancelado { background: #fff5f5; color: #e53e3e; }
+    
     .btn-secondary { background: #edf2f7; color: #4a5568; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; text-decoration: none; }
     
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
@@ -130,7 +173,7 @@ import { ItemService, Item } from '../../../services/item';
     .summary-card strong { font-size: 1.5rem; color: #1a202c; }
     
     .add-item-card, .items-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
-    .section-header { margin-bottom: 1rem; }
+    .section-header { margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
     .add-item-form { display: grid; grid-template-columns: 1fr 100px 120px; gap: 1rem; align-items: end; }
     .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
     .form-group label { font-size: 0.8rem; font-weight: 600; color: #4a5568; }
@@ -146,6 +189,18 @@ import { ItemService, Item } from '../../../services/item';
     th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
     .text-right { text-align: right; }
     .btn-icon-remove { background: none; border: none; cursor: pointer; color: #e53e3e; }
+    
+    .financial-summary { display: flex; justify-content: space-between; padding-top: 1.5rem; border-top: 2px solid #edf2f7; margin-top: 1rem; }
+    .discount-form { display: flex; gap: 1rem; align-items: center; }
+    .discount-form select, .discount-form input { padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.4rem; }
+    .summary-totals p { display: flex; justify-content: space-between; gap: 2rem; margin: 0.5rem 0; font-size: 0.95rem; }
+    .summary-totals span { font-weight: 600; }
+    .final-total { font-size: 1.2rem; font-weight: 800; color: #1a202c; border-top: 1px solid #e2e8f0; padding-top: 0.5rem; }
+
+    .close-order-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; }
+    .close-order-form { display: flex; gap: 1rem; align-items: center; }
+    .close-order-form select { padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.4rem; }
+    .btn-success { background: #38a169; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
     
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .modal { background: white; border-radius: 1rem; width: 400px; padding: 2rem; }
@@ -167,6 +222,10 @@ export class OrdersDetailComponent implements OnInit {
   showMessageModal = signal(false);
   modalMessage = signal('');
   
+  discountType = signal<'FIXO' | 'PERCENTUAL'>('FIXO');
+  discountValue = signal(0);
+  paymentMethod = signal('DINHEIRO');
+  
   itemForm: FormGroup = this.fb.group({
     item_id: [null, [Validators.required]],
     qtd: [1, [Validators.required, Validators.min(1)]],
@@ -177,6 +236,13 @@ export class OrdersDetailComponent implements OnInit {
     const items = this.order()?.order_items || [];
     return items.reduce((acc: number, item: any) => acc + (item.qtd * parseFloat(item.price)), 0);
   });
+
+  calculatedDiscount = computed(() => {
+      if (this.discountType() === 'FIXO') return this.discountValue();
+      return (this.orderTotal() * this.discountValue()) / 100;
+  });
+
+  finalTotal = computed(() => Math.max(0, this.orderTotal() - this.calculatedDiscount()));
 
   totalItems = computed(() => {
     const items = this.order()?.order_items || [];
@@ -245,6 +311,18 @@ export class OrdersDetailComponent implements OnInit {
         this.modalMessage.set('Erro ao remover item');
         this.showMessageModal.set(true);
         this.itemToRemove.set(null);
+    }
+  }
+
+  async closeOrder() {
+    if (!confirm('Tem certeza que deseja fechar esta comanda?')) return;
+    try {
+        // A API PATCH /status aceita apenas o status.
+        await this.orderService.updateOrderStatus(this.orderId()!, 'PAGO');
+        await this.loadOrder();
+    } catch (e) {
+        this.modalMessage.set('Erro ao fechar comanda');
+        this.showMessageModal.set(true);
     }
   }
 }

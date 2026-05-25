@@ -32,6 +32,18 @@ export class OrderService {
     }
   }
 
+  async updateOrderStatus(orderId: number, status: string): Promise<any> {
+    try {
+      return await firstValueFrom(
+        this.http.patch<any>(`${this.apiUrl}/api/v1/orders/${orderId}/status`, { status }, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao atualizar status da comanda';
+    }
+  }
+
   async removeItemFromOrder(orderId: number, orderItemId: number): Promise<void> {
     try {
       await firstValueFrom(
