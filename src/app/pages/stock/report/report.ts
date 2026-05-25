@@ -2,7 +2,10 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { StockService } from '../../../services/stock';
+import { OrderService } from '../../../services/order';
 import { SidebarComponent } from '../../../components/sidebar/sidebar';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface DailyData {
   date: string;
@@ -20,31 +23,84 @@ interface DailyData {
 
       <main class="content">
         <header class="content-header">
-          <h1>Movimentações</h1>
-          <form [formGroup]="filterForm" (ngSubmit)="loadReport()" class="filter-form">
-            <input type="date" formControlName="start_date">
-            <input type="date" formControlName="end_date">
-            <button type="submit" class="btn-primary">Filtrar</button>
-          </form>
+          <div class="header-titles">
+            <h1>Relatório Executivo</h1>
+            <p class="subtitle">Análise de Performance e Saúde Financeira</p>
+          </div>
+          
+          <div class="header-actions">
+            <form [formGroup]="filterForm" (ngSubmit)="loadReport()" class="filter-form">
+              <div class="select-group">
+                <select formControlName="month">
+                  <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+                </select>
+                <select formControlName="year">
+                  <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+                </select>
+              </div>
+              <button type="submit" class="btn-primary">Filtrar</button>
+            </form>
+            <button class="btn-export" (click)="exportToPDF()" [disabled]="reportData().items?.length === 0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-btn">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Exportar PDF
+            </button>
+          </div>
         </header>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Total Entradas</h3>
-            <p class="value">{{ totalEntries() }}</p>
+        <div class="kpi-grid">
+          <div class="kpi-card revenue">
+            <div class="kpi-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75m0 0V4.5m0 12.75V4.5m16.5 0v15M12 4.5v15m7.5-9h-15" />
+              </svg>
+            </div>
+            <div class="kpi-info">
+              <h3>Receita Bruta</h3>
+              <p class="value">{{ financialSummary().revenue | currency:'BRL' }}</p>
+              <span class="trend pos">Inflow de saídas</span>
+            </div>
           </div>
-          <div class="stat-card">
-            <h3>Total Saídas</h3>
-            <p class="value">{{ totalExits() }}</p>
+
+          <div class="kpi-card costs">
+            <div class="kpi-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-3V18m-3-3V18M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <div class="kpi-info">
+              <h3>Custos Operacionais</h3>
+              <p class="value">{{ financialSummary().costs | currency:'BRL' }}</p>
+              <span class="trend neg">Outflow de entradas</span>
+            </div>
+          </div>
+
+          <div class="kpi-card profit" [class.negative]="financialSummary().profit < 0">
+            <div class="kpi-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <div class="kpi-info">
+              <h3>Lucro Líquido</h3>
+              <p class="value">{{ financialSummary().profit | currency:'BRL' }}</p>
+              <span class="trend" [class.pos]="financialSummary().profit >= 0" [class.neg]="financialSummary().profit < 0">
+                Margem: {{ financialSummary().margin | number:'1.1-1' }}%
+              </span>
+            </div>
           </div>
         </div>
 
         <section class="chart-container" *ngIf="dailyData().length > 0">
           <div class="chart-header">
-            <h2>Movimentação Financeira</h2>
+            <div class="chart-title">
+              <h2>Tendência Mensal</h2>
+              <p>Comparativo diário de Receita vs Custos</p>
+            </div>
             <div class="legend">
-              <span class="legend-item"><span class="box entry"></span> Entradas</span>
-              <span class="legend-item"><span class="box exit"></span> Saídas</span>
+              <span class="legend-item"><span class="box entry"></span> Custos (Entradas)</span>
+              <span class="legend-item"><span class="box exit"></span> Receita (Saídas)</span>
             </div>
           </div>
           
@@ -69,12 +125,12 @@ interface DailyData {
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="line-chart-svg">
                 <defs>
                   <linearGradient id="entryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#48bb78" stop-opacity="0.3" />
-                    <stop offset="100%" stop-color="#48bb78" stop-opacity="0" />
-                  </linearGradient>
-                  <linearGradient id="exitGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#f56565" stop-opacity="0.3" />
                     <stop offset="100%" stop-color="#f56565" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="exitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#48bb78" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#48bb78" stop-opacity="0" />
                   </linearGradient>
                 </defs>
 
@@ -83,23 +139,23 @@ interface DailyData {
                 <path [attr.d]="exitArea()" fill="url(#exitGradient)" stroke="none"></path>
 
                 <!-- Linhas -->
-                <path [attr.d]="'M ' + entryPoints()" fill="none" stroke="#48bb78" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
-                <path [attr.d]="'M ' + exitPoints()" fill="none" stroke="#f56565" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
+                <path [attr.d]="'M ' + entryPoints()" fill="none" stroke="#f56565" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
+                <path [attr.d]="'M ' + exitPoints()" fill="none" stroke="#48bb78" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>
               </svg>
 
               <div class="points-overlay">
                 <div class="day-points" *ngFor="let day of dailyData(); let i = index" [style.left.%]="i * (100 / (dailyData().length - 1 || 1))">
                   <div class="point entry" 
                        [style.bottom.%]="getPercentage(day.entries)"
-                       [title]="'Entrada: ' + (day.entries | currency:'BRL')">
-                    <div class="tooltip">{{ day.entries | currency:'BRL' }}</div>
+                       [title]="'Custo: ' + (day.entries | currency:'BRL')">
+                    <div class="tooltip">Custo: {{ day.entries | currency:'BRL' }}</div>
                   </div>
                   <div class="point exit" 
                        [style.bottom.%]="getPercentage(day.exits)"
-                       [title]="'Saída: ' + (day.exits | currency:'BRL')">
-                    <div class="tooltip">{{ day.exits | currency:'BRL' }}</div>
+                       [title]="'Receita: ' + (day.exits | currency:'BRL')">
+                    <div class="tooltip">Receita: {{ day.exits | currency:'BRL' }}</div>
                   </div>
-                  <span class="day-label">{{ day.date.split('/')[0] }}/{{ day.date.split('/')[1] }}</span>
+                  <span class="day-label">{{ day.date.split('/')[0] }}</span>
                 </div>
               </div>
             </div>
@@ -107,33 +163,41 @@ interface DailyData {
         </section>
 
         <div class="table-container">
-          <table *ngIf="reportData().items?.length > 0; else emptyState">
+          <div class="table-header">
+            <h2>Detalhamento das Operações</h2>
+          </div>
+          <table *ngIf="mergedData().length > 0; else emptyState">
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Item</th>
-                <th>Tipo</th>
+                <th>Item / Comanda</th>
+                <th>Operação</th>
                 <th>Qtd</th>
-                <th>Preço</th>
+                <th>Vlr Unitário</th>
+                <th>Vlr Total</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of reportData().items">
-                <td>{{ formatDate(item.date || item.date_entry || item.date_exit) }}</td>
-                <td>{{ item.item_name }}</td>
+              <tr *ngFor="let item of mergedData()">
+                <td>{{ formatDate(item.date) }}</td>
+                <td class="item-name">{{ item.item_name }}</td>
                 <td>
-                  <span class="badge" [class.badge-entry]="item.type === 'ENTRY'" [class.badge-exit]="item.type === 'EXIT'">
-                    {{ item.type === 'ENTRY' ? '⬆️ ENTRADA' : '⬇️ SAÍDA' }}
+                  <span class="badge" [class.badge-entry]="item.type === 'ENTRY'" [class.badge-exit]="item.type === 'SALE'">
+                    {{ item.type === 'ENTRY' ? 'Entrada (Custo)' : 'Venda (Receita)' }}
                   </span>
                 </td>
                 <td>{{ item.qtd }}</td>
                 <td>{{ item.price | currency:'BRL' }}</td>
+                <td class="font-bold">{{ item.total | currency:'BRL' }}</td>
               </tr>
             </tbody>
           </table>
           <ng-template #emptyState>
             <div class="empty-state">
-              <p>Nenhuma movimentação encontrada.</p>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="empty-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-2.24-1.8-4.074-4.048-4.14a48.423 48.423 0 0 0-11.404 0C4.05 9.886 2.25 11.72 2.25 13.962Z" />
+              </svg>
+              <p>Nenhuma movimentação encontrada para o período selecionado.</p>
             </div>
           </ng-template>
         </div>
@@ -141,203 +205,308 @@ interface DailyData {
     </div>
   `,
   styles: [`
-    .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 320px; }
-    .content-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 2rem; font-weight: 800; color: #1a202c; }
-    .filter-form { display: flex; gap: 1rem; align-items: center; }
-    .filter-form input { padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
-    .btn-primary { background: #3182ce; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-    .stat-card { background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-left: 4px solid #3182ce; }
-    .stat-card h3 { font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem; }
-    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: #1a202c; }
+    .dashboard-container { display: flex; min-height: 100vh; background: #f4f7fa; }
+    .content { flex: 1; padding: 2.5rem; margin-left: 320px; max-width: 1400px; }
     
+    .content-header { 
+      margin-bottom: 2.5rem; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+    }
+    .header-titles h1 { font-size: 2.25rem; font-weight: 900; color: #1a202c; letter-spacing: -0.025em; margin: 0; }
+    .subtitle { color: #718096; font-size: 1rem; margin-top: 0.25rem; }
+
+    .header-actions { display: flex; gap: 1rem; align-items: center; }
+    .filter-form { 
+      background: white; 
+      padding: 0.5rem; 
+      border-radius: 0.75rem; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .select-group { display: flex; gap: 0.5rem; }
+    .filter-form select { 
+      padding: 0.5rem 2rem 0.5rem 1rem; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 0.5rem; 
+      font-weight: 600;
+      color: #4a5568;
+      background: #f8fafc;
+    }
+    .btn-primary { 
+      background: #1a202c; 
+      color: white; 
+      border: none; 
+      padding: 0.5rem 1.25rem; 
+      border-radius: 0.5rem; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #2d3748; }
+
+    .btn-export {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #3182ce;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(49, 130, 206, 0.4);
+      transition: all 0.2s;
+    }
+    .btn-export:hover:not(:disabled) { background: #2b6cb0; transform: translateY(-1px); }
+    .btn-export:disabled { opacity: 0.5; cursor: not-allowed; }
+    .icon-btn { width: 1.25rem; height: 1.25rem; }
+
+    .kpi-grid { 
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 1.5rem; 
+      margin-bottom: 2.5rem; 
+    }
+    .kpi-card { 
+      background: white; 
+      padding: 1.75rem; 
+      border-radius: 1.25rem; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      border: 1px solid #edf2f7;
+    }
+    .kpi-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .kpi-icon svg { width: 1.75rem; height: 1.75rem; }
+    
+    .revenue .kpi-icon { background: #f0fff4; color: #38a169; }
+    .costs .kpi-icon { background: #fff5f5; color: #e53e3e; }
+    .profit .kpi-icon { background: #ebf8ff; color: #3182ce; }
+    .profit.negative .kpi-icon { background: #fff5f5; color: #e53e3e; }
+
+    .kpi-info h3 { font-size: 0.875rem; color: #718096; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+    .kpi-info .value { font-size: 1.75rem; font-weight: 800; color: #1a202c; margin: 0.25rem 0; }
+    .trend { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 0.375rem; }
+    .trend.pos { background: #f0fff4; color: #38a169; }
+    .trend.neg { background: #fff5f5; color: #e53e3e; }
+
     .chart-container { 
       background: white; 
-      padding: 2rem; 
+      padding: 2.5rem; 
       border-radius: 1.5rem; 
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
-      margin-bottom: 2rem; 
+      margin-bottom: 2.5rem; 
+      border: 1px solid #edf2f7;
     }
     .chart-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
+      align-items: flex-start;
+      margin-bottom: 2.5rem;
     }
-    .chart-header h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #2d3748;
-      margin: 0;
-    }
-    .chart-wrapper { 
-      height: 350px; 
-      display: flex; 
-      gap: 1.5rem;
-    }
-    .y-axis { 
-      display: flex; 
-      flex-direction: column; 
-      justify-content: space-between; 
-      height: 280px; 
-      font-size: 0.75rem; 
-      color: #a0aec0; 
-      text-align: right;
-      min-width: 60px;
-    }
-    .chart-area { 
-      flex: 1; 
-      position: relative; 
-      height: 280px;
-    }
-    .grid-lines {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .grid-line { 
-      position: absolute; 
-      left: 0; 
-      right: 0; 
-      border-top: 1px dashed #edf2f7; 
-      width: 100%;
-    }
-    .line-chart-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-    .points-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .day-points {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      pointer-events: none;
-    }
-    .point {
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: white;
-      border: 2px solid currentColor;
-      transform: translate(-50%, 50%);
-      cursor: pointer;
-      pointer-events: auto;
-      transition: all 0.2s;
-      z-index: 5;
-    }
-    .point.entry { color: #48bb78; }
-    .point.exit { color: #f56565; }
-    
-    .point:hover {
-      transform: translate(-50%, 50%) scale(1.5);
-      z-index: 10;
-    }
-    .tooltip {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(10px);
-      background: #2d3748;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      white-space: nowrap;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.2s;
-      z-index: 10;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .point:hover .tooltip {
-      opacity: 1;
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
-    }
-    .day-label { 
-      position: absolute;
-      bottom: -30px;
-      transform: translateX(-50%);
-      font-size: 0.75rem; 
-      font-weight: 600;
-      color: #718096; 
-      white-space: nowrap;
-    }
-    .legend { 
-      display: flex; 
-      gap: 1.5rem; 
-    }
-    .legend-item { 
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      font-size: 0.875rem; 
-      color: #4a5568;
-      font-weight: 500;
-    }
-    .box { width: 10px; height: 10px; border-radius: 2px; }
-    .box.entry { background: #48bb78; }
-    .box.exit { background: #f56565; }
+    .chart-title h2 { font-size: 1.5rem; font-weight: 800; color: #1a202c; margin: 0; }
+    .chart-title p { color: #718096; font-size: 0.875rem; margin-top: 0.25rem; }
 
-    .table-container { 
-      background: white; 
-      border-radius: 1.5rem; 
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
-      overflow: hidden; 
+    .chart-wrapper { height: 400px; display: flex; gap: 2rem; }
+    .y-axis { 
+      display: flex; flex-direction: column; justify-content: space-between; 
+      height: 320px; font-size: 0.75rem; color: #a0aec0; text-align: right; min-width: 70px;
     }
+    .chart-area { flex: 1; position: relative; height: 320px; }
+    .grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed #edf2f7; width: 100%; }
+    .line-chart-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    
+    .points-overlay { position: absolute; inset: 0; pointer-events: none; }
+    .day-points { position: absolute; top: 0; bottom: 0; width: 0; display: flex; align-items: center; }
+    .point { 
+      position: absolute; width: 8px; height: 8px; border-radius: 50%; background: white; 
+      border: 2px solid currentColor; transform: translate(-50%, 50%); 
+      cursor: pointer; pointer-events: auto; transition: all 0.2s; z-index: 5;
+    }
+    .point.entry { color: #f56565; }
+    .point.exit { color: #48bb78; }
+    .point:hover { transform: translate(-50%, 50%) scale(1.8); z-index: 10; }
+    
+    .tooltip {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(10px);
+      background: #2d3748; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem;
+      white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s; z-index: 10;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    .point:hover .tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+    .day-label { 
+      position: absolute; bottom: -35px; transform: translateX(-50%);
+      font-size: 0.7rem; font-weight: 700; color: #a0aec0; 
+    }
+
+    .legend { display: flex; gap: 1.5rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #4a5568; }
+    .box { width: 12px; height: 12px; border-radius: 3px; }
+    .box.entry { background: #f56565; }
+    .box.exit { background: #48bb78; }
+
+    .table-container { background: white; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #edf2f7; }
+    .table-header { padding: 1.5rem 2rem; border-bottom: 1px solid #edf2f7; }
+    .table-header h2 { font-size: 1.25rem; font-weight: 800; color: #1a202c; margin: 0; }
+    
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f7fafc; padding: 1rem; text-align: left; font-size: 0.875rem; color: #718096; border-bottom: 1px solid #e2e8f0; }
-    td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #1a202c; }
-    .badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 700; }
-    .badge-entry { color: #38a169; background: #f0fff4; }
-    .badge-exit { color: #e53e3e; background: #fff5f5; }
-    .empty-state { padding: 3rem; text-align: center; color: #718096; }
+    th { background: #f8fafc; padding: 1.25rem 2rem; text-align: left; font-size: 0.75rem; font-weight: 800; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 1.25rem 2rem; border-bottom: 1px solid #edf2f7; color: #2d3748; font-size: 0.9375rem; }
+    .font-bold { font-weight: 700; color: #1a202c; }
+    .item-name { font-weight: 600; }
+
+    .badge { padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+    .badge-entry { color: #c53030; background: #fff5f5; }
+    .badge-exit { color: #2f855a; background: #f0fff4; }
+    
+    .empty-state { padding: 5rem; text-align: center; color: #a0aec0; }
+    .empty-icon { width: 4rem; height: 4rem; margin: 0 auto 1.5rem; opacity: 0.3; }
   `]
 })
 export class ReportComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly stockService = inject(StockService);
+  private readonly orderService = inject(OrderService);
+
+  months = [
+    { value: '01', label: 'Janeiro' }, { value: '02', label: 'Fevereiro' },
+    { value: '03', label: 'Março' }, { value: '04', label: 'Abril' },
+    { value: '05', label: 'Maio' }, { value: '06', label: 'Junho' },
+    { value: '07', label: 'Julho' }, { value: '08', label: 'Agosto' },
+    { value: '09', label: 'Setembro' }, { value: '10', label: 'Outubro' },
+    { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }
+  ];
+
+  years = [2024, 2025, 2026];
 
   filterForm: FormGroup = this.fb.group({
-    start_date: [null],
-    end_date: [null]
+    month: [String(new Date().getMonth() + 1).padStart(2, '0')],
+    year: [new Date().getFullYear()]
   });
 
   reportData = signal<any>({});
+  ordersData = signal<any[]>([]);
   
-  totalEntries = computed(() => this.reportData().items?.filter((i: any) => i.type === 'ENTRY').length || 0);
-  totalExits = computed(() => this.reportData().items?.filter((i: any) => i.type === 'EXIT').length || 0);
-
-  dailyData = computed(() => {
-    const items = this.reportData().items || [];
-    const map = new Map<string, DailyData>();
+  financialSummary = computed(() => {
+    const stockItems = this.reportData().items || [];
+    const orders = this.ordersData();
+    const { month, year } = this.filterForm.value;
     
-    items.forEach((i: any) => {
-      const date = this.formatDate(i.date || i.date_entry || i.date_exit);
-      const data = map.get(date) || { date, entries: 0, exits: 0 };
-      if (i.type === 'ENTRY') data.entries += (i.qtd * i.price);
-      else data.exits += (i.qtd * i.price);
-      map.set(date, data);
+    let revenue = 0;
+    let costs = 0;
+    
+    // Custos vêm das Entradas de Estoque
+    stockItems.forEach((i: any) => {
+      if (i.type === 'ENTRY') {
+        costs += (i.qtd * i.price);
+      }
+    });
+
+    // Receita Bruta vem das Vendas (Comandas Pagas)
+    orders.forEach((o: any) => {
+      if (o.status === 'PAGO') {
+        const orderDate = new Date(o.created_at);
+        const orderMonth = String(orderDate.getMonth() + 1).padStart(2, '0');
+        const orderYear = orderDate.getFullYear();
+
+        if (orderMonth === month && orderYear === year) {
+          revenue += parseFloat(o.total_value || 0);
+        }
+      }
     });
     
-    return Array.from(map.values()).sort((a,b) => a.date.localeCompare(b.date));
+    const profit = revenue - costs;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+    
+    return { revenue, costs, profit, margin };
+  });
+
+  dailyData = computed(() => {
+    const stockItems = this.reportData().items || [];
+    const orders = this.ordersData();
+    const { month, year } = this.filterForm.value;
+    const map = new Map<string, DailyData>();
+    
+    // Agrupa Entradas (Custos)
+    stockItems.forEach((i: any) => {
+      if (i.type === 'ENTRY') {
+        const date = this.formatDate(i.date || i.date_entry || i.date_exit);
+        const data = map.get(date) || { date, entries: 0, exits: 0 };
+        data.entries += (i.qtd * i.price);
+        map.set(date, data);
+      }
+    });
+
+    // Agrupa Vendas (Receita)
+    orders.forEach((o: any) => {
+      if (o.status === 'PAGO') {
+        const orderDate = new Date(o.created_at);
+        const orderMonth = String(orderDate.getMonth() + 1).padStart(2, '0');
+        const orderYear = orderDate.getFullYear();
+
+        if (orderMonth === month && orderYear === year) {
+          const date = `${String(orderDate.getDate()).padStart(2, '0')}/${orderMonth}/${orderYear}`;
+          const data = map.get(date) || { date, entries: 0, exits: 0 };
+          data.exits += parseFloat(o.total_value || 0);
+          map.set(date, data);
+        }
+      }
+    });
+    
+    return Array.from(map.values()).sort((a,b) => {
+      const [da, ma, ya] = a.date.split('/');
+      const [db, mb, yb] = b.date.split('/');
+      return new Date(`${ya}-${ma}-${da}`).getTime() - new Date(`${yb}-${mb}-${db}`).getTime();
+    });
   });
   
   maxVal = computed(() => Math.max(...this.dailyData().map(d => Math.max(d.entries, d.exits)), 1));
+
+  mergedData = computed(() => {
+    const stockItems = (this.reportData().items || []).filter((i: any) => i.type === 'ENTRY');
+    const orders = this.ordersData();
+    const { month, year } = this.filterForm.value;
+
+    const salesItems = orders
+      .filter((o: any) => {
+        if (o.status !== 'PAGO') return false;
+        const orderDate = new Date(o.created_at);
+        return String(orderDate.getMonth() + 1).padStart(2, '0') === month && 
+               orderDate.getFullYear() === year;
+      })
+      .map((o: any) => ({
+        date: o.created_at.split('T')[0],
+        item_name: `Comanda #${o.number}`,
+        type: 'SALE',
+        qtd: 1,
+        price: parseFloat(o.total_value),
+        total: parseFloat(o.total_value)
+      }));
+
+    const entryItems = stockItems.map((i: any) => ({
+      date: i.date || i.date_entry,
+      item_name: i.item_name,
+      type: 'ENTRY',
+      qtd: i.qtd,
+      price: i.price,
+      total: i.qtd * i.price
+    }));
+
+    return [...entryItems, ...salesItems].sort((a, b) => b.date.localeCompare(a.date));
+  });
 
   entryPoints = computed(() => this.generatePath('entries'));
   exitPoints = computed(() => this.generatePath('exits'));
@@ -347,6 +516,7 @@ export class ReportComponent implements OnInit {
   private generatePath(key: 'entries' | 'exits'): string {
     const data = this.dailyData();
     if (data.length === 0) return '';
+    if (data.length === 1) return `0,${100 - this.getPercentage(data[0][key])} L 100,${100 - this.getPercentage(data[0][key])}`;
     const stepX = 100 / (data.length - 1 || 1);
     return data.map((d, i) => `${i * stepX},${100 - this.getPercentage(d[key])}`).join(' L ');
   }
@@ -355,7 +525,7 @@ export class ReportComponent implements OnInit {
     const data = this.dailyData();
     if (data.length === 0) return '';
     const stepX = 100 / (data.length - 1 || 1);
-    const points = data.map((d, i) => `${i * stepX},${100 - this.getPercentage(d[key])}`).join(' L ');
+    const points = this.generatePath(key);
     return `M 0,100 L ${points} L 100,100 Z`;
   }
 
@@ -368,10 +538,19 @@ export class ReportComponent implements OnInit {
   }
 
   async loadReport() {
-    const { start_date, end_date } = this.filterForm.value;
+    const { month, year } = this.filterForm.value;
+    const start_date = `${year}-${month}-01`;
+    const lastDay = new Date(year, parseInt(month), 0).getDate();
+    const end_date = `${year}-${month}-${lastDay}`;
+    
     try {
-      const data = await this.stockService.getStockReport(start_date, end_date);
-      this.reportData.set(data);
+      const [stockData, ordersResponse] = await Promise.all([
+        this.stockService.getStockReport(start_date, end_date),
+        this.orderService.listOrders()
+      ]);
+      
+      this.reportData.set(stockData);
+      this.ordersData.set(ordersResponse.items || []);
     } catch (e) {
       alert('Erro ao carregar relatório');
     }
@@ -381,5 +560,78 @@ export class ReportComponent implements OnInit {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
+  }
+
+  exportToPDF() {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const { month, year } = this.filterForm.value;
+    const summary = this.financialSummary();
+    const monthLabel = this.months.find(m => m.value === month)?.label;
+
+    // Header
+    doc.setFillColor(26, 32, 44);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('Relatório Executivo Financeiro', 15, 20);
+    doc.setFontSize(12);
+    doc.text(`Período: ${monthLabel} de ${year}`, 15, 30);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 150, 30);
+
+    // KPI Section
+    doc.setTextColor(26, 32, 44);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo de Performance', 15, 55);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [['Métrica', 'Valor', 'Impacto']],
+      body: [
+        ['Receita Bruta (Vendas)', this.formatCurrency(summary.revenue), 'Entrada de Capital'],
+        ['Custos Operacionais (Estoque)', this.formatCurrency(summary.costs), 'Saída de Capital'],
+        ['Lucro Líquido', this.formatCurrency(summary.profit), summary.profit >= 0 ? 'Resultado Positivo' : 'Resultado Negativo'],
+        ['Margem Operacional', `${summary.margin.toFixed(2)}%`, 'Eficiência']
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [45, 55, 72] }
+    });
+
+    // Detailed Table
+    doc.text('Detalhamento de Movimentações (Entradas e Vendas)', 15, (doc as any).lastAutoTable.finalY + 15);
+
+    const tableData = this.mergedData().map((i: any) => [
+      this.formatDate(i.date),
+      i.item_name,
+      i.type === 'ENTRY' ? 'Entrada (Custo)' : 'Venda (Receita)',
+      i.qtd,
+      this.formatCurrency(i.price),
+      this.formatCurrency(i.total)
+    ]);
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Data', 'Descrição', 'Operação', 'Qtd', 'Vlr Unit', 'Total']],
+      body: tableData,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [45, 55, 72] }
+    });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text('Meu Barzinho - Sistema de Gestão', 15, 285);
+      doc.text(`Página ${i} de ${pageCount}`, 180, 285);
+    }
+
+    doc.save(`Relatorio_Executivo_${month}_${year}.pdf`);
+  }
+
+  private formatCurrency(val: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   }
 }

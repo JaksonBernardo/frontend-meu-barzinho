@@ -290,8 +290,8 @@ export class OrdersDetailComponent implements OnInit {
         this.itemForm.reset({ qtd: 1 });
         this.selectedItemName.set('');
         await this.loadOrder();
-    } catch (e) {
-        this.modalMessage.set('Erro ao adicionar item');
+    } catch (e: any) {
+        this.modalMessage.set(e);
         this.showMessageModal.set(true);
     }
   }
@@ -307,8 +307,8 @@ export class OrdersDetailComponent implements OnInit {
         await this.orderService.removeItemFromOrder(this.orderId()!, id);
         this.itemToRemove.set(null);
         await this.loadOrder();
-    } catch (e) {
-        this.modalMessage.set('Erro ao remover item');
+    } catch (e: any) {
+        this.modalMessage.set(e);
         this.showMessageModal.set(true);
         this.itemToRemove.set(null);
     }
@@ -320,8 +320,8 @@ export class OrdersDetailComponent implements OnInit {
         // A API PATCH /status aceita apenas o status.
         await this.orderService.updateOrderStatus(this.orderId()!, 'PAGO');
         await this.loadOrder();
-    } catch (e) {
-        this.modalMessage.set('Erro ao fechar comanda');
+    } catch (e: any) {
+        this.modalMessage.set(e);
         this.showMessageModal.set(true);
     }
   }
