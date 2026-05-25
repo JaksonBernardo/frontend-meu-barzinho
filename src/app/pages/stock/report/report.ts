@@ -2,9 +2,9 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { StockService } from '../../../services/stock';
-import { OrderService } from '../../../services/order';
+import { SaleService, SalePublic } from '../../../services/sale';
 import { SidebarComponent } from '../../../components/sidebar/sidebar';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface DailyData {
@@ -17,6 +17,7 @@ interface DailyData {
   selector: 'app-report',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, SidebarComponent],
+  providers: [SaleService],
   template: `
     <div class="dashboard-container">
       <app-sidebar activePage="report"></app-sidebar>
@@ -40,7 +41,7 @@ interface DailyData {
               </div>
               <button type="submit" class="btn-primary">Filtrar</button>
             </form>
-            <button class="btn-export" (click)="exportToPDF()" [disabled]="reportData().items?.length === 0">
+            <button class="btn-export" (click)="exportToPDF()" [disabled]="salesData().length === 0 && (reportData().items || []).length === 0">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-btn">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
@@ -59,7 +60,7 @@ interface DailyData {
             <div class="kpi-info">
               <h3>Receita Bruta</h3>
               <p class="value">{{ financialSummary().revenue | currency:'BRL' }}</p>
-              <span class="trend pos">Inflow de saídas</span>
+              <span class="trend pos">Inflow de vendas</span>
             </div>
           </div>
 
@@ -72,7 +73,7 @@ interface DailyData {
             <div class="kpi-info">
               <h3>Custos Operacionais</h3>
               <p class="value">{{ financialSummary().costs | currency:'BRL' }}</p>
-              <span class="trend neg">Outflow de entradas</span>
+              <span class="trend neg">Outflow de estoque</span>
             </div>
           </div>
 
@@ -100,7 +101,7 @@ interface DailyData {
             </div>
             <div class="legend">
               <span class="legend-item"><span class="box entry"></span> Custos (Entradas)</span>
-              <span class="legend-item"><span class="box exit"></span> Receita (Saídas)</span>
+              <span class="legend-item"><span class="box exit"></span> Receita (Vendas)</span>
             </div>
           </div>
           
@@ -379,7 +380,7 @@ interface DailyData {
 export class ReportComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly stockService = inject(StockService);
-  private readonly orderService = inject(OrderService);
+  private readonly saleService = inject(SaleService);
 
   months = [
     { value: '01', label: 'Janeiro' }, { value: '02', label: 'Fevereiro' },
@@ -398,34 +399,26 @@ export class ReportComponent implements OnInit {
   });
 
   reportData = signal<any>({});
-  ordersData = signal<any[]>([]);
+  salesData = signal<SalePublic[]>([]);
   
   financialSummary = computed(() => {
     const stockItems = this.reportData().items || [];
-    const orders = this.ordersData();
-    const { month, year } = this.filterForm.value;
+    const sales = this.salesData() || [];
     
     let revenue = 0;
     let costs = 0;
     
-    // Custos vêm das Entradas de Estoque
     stockItems.forEach((i: any) => {
       if (i.type === 'ENTRY') {
-        costs += (i.qtd * i.price);
+        const price = parseFloat(String(i.price)) || 0;
+        const qtd = parseFloat(String(i.qtd)) || 0;
+        costs += (qtd * price);
       }
     });
 
-    // Receita Bruta vem das Vendas (Comandas Pagas)
-    orders.forEach((o: any) => {
-      if (o.status === 'PAGO') {
-        const orderDate = new Date(o.created_at);
-        const orderMonth = String(orderDate.getMonth() + 1).padStart(2, '0');
-        const orderYear = orderDate.getFullYear();
-
-        if (orderMonth === month && orderYear === year) {
-          revenue += parseFloat(o.total_value || 0);
-        }
-      }
+    sales.forEach((s) => {
+      const val = parseFloat(String(s.total_value)) || 0;
+      revenue += val;
     });
     
     const profit = revenue - costs;
@@ -436,77 +429,104 @@ export class ReportComponent implements OnInit {
 
   dailyData = computed(() => {
     const stockItems = this.reportData().items || [];
-    const orders = this.ordersData();
-    const { month, year } = this.filterForm.value;
+    const sales = this.salesData() || [];
     const map = new Map<string, DailyData>();
     
-    // Agrupa Entradas (Custos)
     stockItems.forEach((i: any) => {
       if (i.type === 'ENTRY') {
         const date = this.formatDate(i.date || i.date_entry || i.date_exit);
+        if (!date) return;
         const data = map.get(date) || { date, entries: 0, exits: 0 };
-        data.entries += (i.qtd * i.price);
+        const price = parseFloat(String(i.price)) || 0;
+        const qtd = parseFloat(String(i.qtd)) || 0;
+        data.entries += (qtd * price);
         map.set(date, data);
       }
     });
 
-    // Agrupa Vendas (Receita)
-    orders.forEach((o: any) => {
-      if (o.status === 'PAGO') {
-        const orderDate = new Date(o.created_at);
-        const orderMonth = String(orderDate.getMonth() + 1).padStart(2, '0');
-        const orderYear = orderDate.getFullYear();
-
-        if (orderMonth === month && orderYear === year) {
-          const date = `${String(orderDate.getDate()).padStart(2, '0')}/${orderMonth}/${orderYear}`;
-          const data = map.get(date) || { date, entries: 0, exits: 0 };
-          data.exits += parseFloat(o.total_value || 0);
-          map.set(date, data);
-        }
-      }
+    sales.forEach((s) => {
+      if (!s.created_at) return;
+      const saleDate = new Date(s.created_at);
+      if (isNaN(saleDate.getTime())) return;
+      
+      const date = `${String(saleDate.getDate()).padStart(2, '0')}/${String(saleDate.getMonth() + 1).padStart(2, '0')}/${saleDate.getFullYear()}`;
+      const data = map.get(date) || { date, entries: 0, exits: 0 };
+      const val = parseFloat(String(s.total_value)) || 0;
+      data.exits += val;
+      map.set(date, data);
     });
     
     return Array.from(map.values()).sort((a,b) => {
-      const [da, ma, ya] = a.date.split('/');
-      const [db, mb, yb] = b.date.split('/');
-      return new Date(`${ya}-${ma}-${da}`).getTime() - new Date(`${yb}-${mb}-${db}`).getTime();
+      const partsA = a.date.split('/');
+      const partsB = b.date.split('/');
+      if (partsA.length !== 3 || partsB.length !== 3) return 0;
+      const dateA = new Date(`${partsA[2]}-${partsA[1]}-${partsA[0]}`).getTime();
+      const dateB = new Date(`${partsB[2]}-${partsB[1]}-${partsB[0]}`).getTime();
+      return dateA - dateB;
     });
   });
   
-  maxVal = computed(() => Math.max(...this.dailyData().map(d => Math.max(d.entries, d.exits)), 1));
+  maxVal = computed(() => {
+    const data = this.dailyData();
+    if (data.length === 0) return 1;
+    return Math.max(...data.map(d => Math.max(d.entries, d.exits)), 1);
+  });
 
   mergedData = computed(() => {
     const stockItems = (this.reportData().items || []).filter((i: any) => i.type === 'ENTRY');
-    const orders = this.ordersData();
-    const { month, year } = this.filterForm.value;
+    const sales = this.salesData() || [];
 
-    const salesItems = orders
-      .filter((o: any) => {
-        if (o.status !== 'PAGO') return false;
-        const orderDate = new Date(o.created_at);
-        return String(orderDate.getMonth() + 1).padStart(2, '0') === month && 
-               orderDate.getFullYear() === year;
-      })
-      .map((o: any) => ({
-        date: o.created_at.split('T')[0],
-        item_name: `Comanda #${o.number}`,
+    const salesItems = sales.map((s) => {
+      const price = parseFloat(String(s.item_price)) || 0;
+      const total = parseFloat(String(s.total_value)) || 0;
+      return {
+        date: s.created_at ? s.created_at.split('T')[0] : '',
+        item_name: `${s.item_name} (Comanda #${s.order_number})`,
         type: 'SALE',
-        qtd: 1,
-        price: parseFloat(o.total_value),
-        total: parseFloat(o.total_value)
-      }));
+        qtd: s.qtd || 0,
+        price: price,
+        total: total
+      };
+    }).filter((s: any) => s.date);
 
-    const entryItems = stockItems.map((i: any) => ({
-      date: i.date || i.date_entry,
-      item_name: i.item_name,
-      type: 'ENTRY',
-      qtd: i.qtd,
-      price: i.price,
-      total: i.qtd * i.price
-    }));
+    const entryItems = stockItems.map((i: any) => {
+      const price = parseFloat(String(i.price)) || 0;
+      const qtd = parseFloat(String(i.qtd)) || 0;
+      return {
+        date: i.date || i.date_entry || '',
+        item_name: i.item_name,
+        type: 'ENTRY',
+        qtd: qtd,
+        price: price,
+        total: qtd * price
+      };
+    }).filter((i: any) => i.date);
 
     return [...entryItems, ...salesItems].sort((a, b) => b.date.localeCompare(a.date));
   });
+
+  productBreakdown = computed(() => {
+    const map = new Map<string, { qtd: number, total: number }>();
+    (this.salesData() || []).forEach(s => {
+      const curr = map.get(s.item_name) || { qtd: 0, total: 0 };
+      curr.qtd += s.qtd;
+      curr.total += parseFloat(String(s.total_value)) || 0;
+      map.set(s.item_name, curr);
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1].qtd - a[1].qtd);
+  });
+
+  paymentBreakdown = computed(() => {
+    const map = new Map<string, number>();
+    (this.salesData() || []).forEach(s => {
+      const form = s.payment_form || 'OUTRO';
+      const val = parseFloat(String(s.total_value)) || 0;
+      map.set(form, (map.get(form) || 0) + val);
+    });
+    return Array.from(map.entries());
+  });
+
+  topSellingProduct = computed(() => this.productBreakdown()[0] || null);
 
   entryPoints = computed(() => this.generatePath('entries'));
   exitPoints = computed(() => this.generatePath('exits'));
@@ -524,7 +544,6 @@ export class ReportComponent implements OnInit {
   private generateAreaPath(key: 'entries' | 'exits'): string {
     const data = this.dailyData();
     if (data.length === 0) return '';
-    const stepX = 100 / (data.length - 1 || 1);
     const points = this.generatePath(key);
     return `M 0,100 L ${points} L 100,100 Z`;
   }
@@ -534,7 +553,9 @@ export class ReportComponent implements OnInit {
   }
 
   getPercentage(val: number): number {
-    return (val / this.maxVal()) * 100;
+    const max = this.maxVal();
+    if (max === 0) return 0;
+    return (val / max) * 100;
   }
 
   async loadReport() {
@@ -544,13 +565,13 @@ export class ReportComponent implements OnInit {
     const end_date = `${year}-${month}-${lastDay}`;
     
     try {
-      const [stockData, ordersResponse] = await Promise.all([
+      const [stockData, salesData] = await Promise.all([
         this.stockService.getStockReport(start_date, end_date),
-        this.orderService.listOrders()
+        this.saleService.listSalesByPeriod(start_date, end_date)
       ]);
       
       this.reportData.set(stockData);
-      this.ordersData.set(ordersResponse.items || []);
+      this.salesData.set(salesData || []);
     } catch (e) {
       alert('Erro ao carregar relatório');
     }
@@ -598,8 +619,51 @@ export class ReportComponent implements OnInit {
       headStyles: { fillColor: [45, 55, 72] }
     });
 
+    // Breakdown Section
+    const breakdownTitleY = (doc as any).lastAutoTable.finalY + 15;
+    doc.text('Análise por Produto e Pagamento', 15, breakdownTitleY);
+    
+    const topProd = this.topSellingProduct();
+    let tablesStartY = breakdownTitleY + 10;
+    
+    if (topProd) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Destaque: O produto mais vendido foi ${topProd[0]} com ${topProd[1].qtd} unidades.`, 15, breakdownTitleY + 7);
+      tablesStartY += 5;
+    }
+
+    // Product Table
+    autoTable(doc, {
+      startY: tablesStartY,
+      head: [['Produto', 'Qtd Vendida', 'Total Recebido']],
+      body: this.productBreakdown().map(p => [p[0], p[1].qtd, this.formatCurrency(p[1].total)]),
+      theme: 'striped',
+      headStyles: { fillColor: [49, 130, 206] },
+      margin: { right: 110 },
+      styles: { fontSize: 8 }
+    });
+
+    const productTableFinalY = (doc as any).lastAutoTable.finalY;
+
+    // Payment Table (Side by side)
+    autoTable(doc, {
+      startY: tablesStartY,
+      head: [['Forma de Pagamento', 'Total']],
+      body: this.paymentBreakdown().map(p => [this.translatePayment(p[0]), this.formatCurrency(p[1])]),
+      theme: 'striped',
+      headStyles: { fillColor: [56, 161, 105] },
+      margin: { left: 110 },
+      styles: { fontSize: 8 }
+    });
+
+    const paymentTableFinalY = (doc as any).lastAutoTable.finalY;
+    const maxTablesY = Math.max(productTableFinalY, paymentTableFinalY);
+
     // Detailed Table
-    doc.text('Detalhamento de Movimentações (Entradas e Vendas)', 15, (doc as any).lastAutoTable.finalY + 15);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Detalhamento de Movimentações (Entradas e Vendas)', 15, maxTablesY + 15);
 
     const tableData = this.mergedData().map((i: any) => [
       this.formatDate(i.date),
@@ -611,10 +675,10 @@ export class ReportComponent implements OnInit {
     ]);
 
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 20,
+      startY: maxTablesY + 20,
       head: [['Data', 'Descrição', 'Operação', 'Qtd', 'Vlr Unit', 'Total']],
       body: tableData,
-      styles: { fontSize: 9 },
+      styles: { fontSize: 8 },
       headStyles: { fillColor: [45, 55, 72] }
     });
 
@@ -633,5 +697,18 @@ export class ReportComponent implements OnInit {
 
   private formatCurrency(val: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  }
+
+  private translatePayment(form: string): string {
+    const map: any = {
+      'CASH': 'Dinheiro',
+      'DINHEIRO': 'Dinheiro',
+      'PIX': 'PIX',
+      'DEBIT': 'Débito',
+      'DEBITO': 'Débito',
+      'CREDIT': 'Crédito',
+      'CREDITO': 'Crédito'
+    };
+    return map[form] || form;
   }
 }
