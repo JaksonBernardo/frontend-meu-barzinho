@@ -13,7 +13,10 @@ import { OrdersDetailComponent } from './pages/orders/detail/detail';
 import { authGuard } from './guards/auth';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
+  { 
+    path: '', 
+    component: HomeComponent
+  },
   { path: 'login', component: LoginComponent },
   { 
     path: 'dashboard', 

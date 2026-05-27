@@ -1,0 +1,14 @@
+services:
+  angular-docker:
+    container_name: meu_barzinho_angular
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - meu-barzinho
+
+networks:
+  meu-barzinho:
+    external: true

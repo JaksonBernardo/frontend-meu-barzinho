@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { SidebarComponent } from '../../../components/sidebar/sidebar';
 import { MessageModalComponent } from '../../../components/message-modal/message-modal';
 import { OrderService } from '../../../services/order';
@@ -26,6 +26,10 @@ import { ItemService, Item } from '../../../services/item';
         <header class="page-header">
           <div>
             <h1>Comanda #{{ order()?.number }}</h1>
+            <div class="description-edit">
+              <input type="text" [(ngModel)]="orderDescription" placeholder="Descrição da comanda">
+              <button class="btn-primary-small" (click)="updateDescription()">Salvar</button>
+            </div>
             <span class="status-badge" [class]="(order()?.status || 'aberto').toLowerCase()">
               {{ order()?.status }}
             </span>
@@ -158,6 +162,9 @@ import { ItemService, Item } from '../../../services/item';
     .content { flex: 1; padding: 3rem; margin-left: 320px; }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .page-header h1 { font-size: 1.8rem; font-weight: 700; color: #1a202c; display: flex; align-items: center; gap: 1rem; }
+    .description-edit { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .description-edit input { padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 0.4rem; }
+    .btn-primary-small { padding: 0.4rem 0.8rem; background: #3182ce; color: white; border: none; border-radius: 0.4rem; cursor: pointer; }
     .subtitle { font-size: 0.92rem; color: #6b7280; }
     
     .status-badge { font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 999px; text-transform: uppercase; }
@@ -216,6 +223,7 @@ export class OrdersDetailComponent implements OnInit {
   
   orderId = signal<number | null>(null);
   order = signal<any>(null);
+  orderDescription = signal('');
   itemSuggestions = signal<Item[]>([]);
   selectedItemName = signal('');
   itemToRemove = signal<number | null>(null);
@@ -261,8 +269,21 @@ export class OrdersDetailComponent implements OnInit {
     try {
         const data = await this.orderService.getOrder(this.orderId()!);
         this.order.set(data);
+        this.orderDescription.set(data.description || '');
     } catch (e) {
         console.error(e);
+    }
+  }
+
+  async updateDescription() {
+    try {
+        await this.orderService.updateOrder(this.orderId()!, { description: this.orderDescription() });
+        this.modalMessage.set('Descrição atualizada com sucesso!');
+        this.showMessageModal.set(true);
+        await this.loadOrder();
+    } catch (e: any) {
+        this.modalMessage.set(e);
+        this.showMessageModal.set(true);
     }
   }
 
@@ -314,12 +335,20 @@ export class OrdersDetailComponent implements OnInit {
     }
   }
 
+  private readonly router = inject(Router);
+
   async closeOrder() {
-    if (!confirm('Tem certeza que deseja fechar esta comanda?')) return;
+    if (!confirm('Tem certeza que deseja fechar esta comanda? Os itens serão movidos para a parte de VENDAS e a comanda será zerada.')) return;
+    
+    // As opções enviadas devem ser: 'DINHEIRO', 'PIX', 'DEBITO', 'CREDITO'
+    const apiPaymentForm = this.paymentMethod();
+
     try {
-        // A API PATCH /status aceita apenas o status.
-        await this.orderService.updateOrderStatus(this.orderId()!, 'PAGO');
-        await this.loadOrder();
+        await this.orderService.updateOrderStatus(this.orderId()!, 'PAGO', apiPaymentForm);
+        this.modalMessage.set('Comanda fechada com sucesso! Os itens foram movidos para VENDAS e a comanda foi zerada.');
+        this.showMessageModal.set(true);
+        // Redireciona após o modal fechar
+        setTimeout(() => this.router.navigate(['/orders']), 2000);
     } catch (e: any) {
         this.modalMessage.set(e);
         this.showMessageModal.set(true);

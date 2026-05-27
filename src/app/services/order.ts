@@ -20,6 +20,30 @@ export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '';
 
+  async updateOrder(orderId: number, orderData: Partial<Order>): Promise<any> {
+    try {
+      return await firstValueFrom(
+        this.http.patch<any>(`${this.apiUrl}/api/v1/orders/${orderId}`, orderData, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao atualizar comanda';
+    }
+  }
+
+  async deleteOrder(orderId: number): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete<void>(`${this.apiUrl}/api/v1/orders/${orderId}`, {
+          withCredentials: true
+        })
+      );
+    } catch (error: any) {
+      throw error.error?.detail || 'Erro ao deletar comanda';
+    }
+  }
+
   async addItemToOrder(orderId: number, itemData: { item_id: number, qtd: number, price?: number }): Promise<any> {
     try {
       return await firstValueFrom(
@@ -32,10 +56,14 @@ export class OrderService {
     }
   }
 
-  async updateOrderStatus(orderId: number, status: string): Promise<any> {
+  async updateOrderStatus(orderId: number, status: string, paymentForm?: string): Promise<any> {
     try {
+      const body: any = { status };
+      if (paymentForm) {
+        body.payment_form = paymentForm;
+      }
       return await firstValueFrom(
-        this.http.patch<any>(`${this.apiUrl}/api/v1/orders/${orderId}/status`, { status }, {
+        this.http.patch<any>(`${this.apiUrl}/api/v1/orders/${orderId}/status`, body, {
           withCredentials: true
         })
       );
