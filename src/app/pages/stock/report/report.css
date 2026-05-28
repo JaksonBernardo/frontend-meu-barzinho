@@ -500,12 +500,29 @@ tbody tr:hover{
   color:#a0aec0;
 }
 
-.empty-icon{
-  width:4rem;
-  height:4rem;
-  margin:0 auto 1rem;
-  opacity:.3;
+.empty-icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1.5rem;
+  opacity: 0.3;
 }
+
+.today-sales-card {
+  background: #f0fff4;
+  padding: 1.5rem 2rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid #c6f6d5;
+  margin-bottom: 2rem;
+}
+.today-sales-card .kpi-icon { background: white; color: #38a169; border-radius: 0.75rem; width: 3.5rem; height: 3.5rem; display: flex; align-items: center; justify-content: center; }
+.today-sales-card .kpi-icon svg { width: 1.75rem; height: 1.75rem; }
+.today-sales-card .kpi-info h3 { font-size: 0.8rem; color: #2f855a; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin: 0; }
+.today-sales-card .kpi-info .value { font-size: 1.75rem; color: #22543d; margin: 0.25rem 0; font-weight: 800; }
+
 
 /* TABLET */
 

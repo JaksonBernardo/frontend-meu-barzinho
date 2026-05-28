@@ -30,38 +30,37 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
           </div>
         </div>
 
-        <section class="chart-section">
+        <section class="recent-orders-section">
           <div class="section-header">
-            <h2>Vendas nos Últimos 7 Dias</h2>
-            <p>Desempenho financeiro diário</p>
+            <h2>Vendas Recentes</h2>
+            <p>Últimas comandas fechadas</p>
           </div>
 
-          <div class="bar-chart-container">
-            <div class="chart-y-axis">
-              <span>{{ maxWeeklyRevenue() | currency:'BRL':'symbol':'1.0-0' }}</span>
-              <span>{{ (maxWeeklyRevenue() / 2) | currency:'BRL':'symbol':'1.0-0' }}</span>
-              <span>R$ 0</span>
-            </div>
-
-            <div class="chart-area">
-              <div class="grid-lines">
-                <div class="line" style="bottom: 0%"></div>
-                <div class="line" style="bottom: 50%"></div>
-                <div class="line" style="bottom: 100%"></div>
-              </div>
-
-              <div class="bars-container">
-                <div class="bar-item" *ngFor="let day of weeklySales()">
-                  <div class="bar-wrapper">
-                    <div class="bar" 
-                         [style.height.%]="getPercentage(day.total)"
-                         [class.has-value]="day.total > 0">
-                      <div class="bar-tooltip">{{ day.total | currency:'BRL' }}</div>
-                    </div>
-                  </div>
-                  <span class="day-label">{{ day.label }}</span>
+          <div class="table-wrapper">
+            <div class="table-container">
+              <table *ngIf="recentOrders().length > 0; else emptyState">
+                <thead>
+                  <tr>
+                    <th>Comanda</th>
+                    <th>Data</th>
+                    <th>Forma Pagto.</th>
+                    <th>Valor Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let order of recentOrders()">
+                    <td class="font-bold">#{{ order.number }}</td>
+                    <td>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ order.payment_form || '---' }}</td>
+                    <td class="font-bold text-success">{{ calculateOrderTotal(order) | currency:'BRL' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <ng-template #emptyState>
+                <div class="empty-state">
+                  <p>Nenhuma venda registrada recentemente.</p>
                 </div>
-              </div>
+              </ng-template>
             </div>
           </div>
         </section>
@@ -72,11 +71,9 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     @media (max-width: 640px) {
       h1 { font-size: 1.75rem; }
       .stat-card .value { font-size: 1.75rem; }
-      .chart-section { padding: 1.5rem; }
-      .bar-chart-container { gap: 0.5rem; height: 250px; }
-      .chart-y-axis { min-width: 50px; font-size: 0.65rem; }
-      .bar { width: 25px; }
-      .day-label { font-size: 0.6rem; }
+      .recent-orders-section { padding: 1.5rem; }
+      .table-wrapper { overflow-x: auto; }
+      table { min-width: 600px; }
     }
 
     .content-header { margin-bottom: 2.5rem; }
@@ -89,43 +86,21 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     .stat-card h3 { font-size: 0.875rem; color: #718096; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     .stat-card .value { font-size: 2.25rem; font-weight: 900; color: #1a202c; margin: 0; }
 
-    .chart-section { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-    .section-header { margin-bottom: 2.5rem; }
+    .recent-orders-section { background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .section-header { margin-bottom: 2rem; }
     .section-header h2 { font-size: 1.5rem; font-weight: 800; color: #2d3748; margin: 0; }
     .section-header p { color: #a0aec0; font-size: 0.9rem; margin-top: 0.25rem; }
 
-    .bar-chart-container { display: flex; gap: 2rem; height: 350px; margin-top: 1rem; }
-    .chart-y-axis { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 30px; font-size: 0.75rem; color: #a0aec0; font-weight: 600; text-align: right; min-width: 70px; }
+    .table-wrapper { width: 100%; border-radius: 1rem; overflow: hidden; border: 1px solid #edf2f7; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8fafc; padding: 1rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 800; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 1rem 1.5rem; border-bottom: 1px solid #edf2f7; color: #2d3748; font-size: 0.9375rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #f8fafc; }
     
-    .chart-area { flex: 1; position: relative; padding-bottom: 30px; }
-    .grid-lines { position: absolute; inset: 0 0 30px 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
-    .grid-lines .line { border-top: 1px dashed #edf2f7; width: 100%; }
-
-    .bars-container { position: relative; height: 100%; display: flex; justify-content: space-around; align-items: flex-end; z-index: 1; }
-    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
-    .bar-wrapper { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
-    
-    .bar { 
-      width: 40px; 
-      background: linear-gradient(to top, #3182ce, #63b3ed); 
-      border-radius: 6px 6px 2px 2px; 
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      position: relative;
-      opacity: 0.85;
-    }
-    .bar:hover { opacity: 1; transform: scaleX(1.05); filter: brightness(1.1); }
-    .bar.has-value:hover .bar-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-
-    .bar-tooltip {
-      position: absolute; top: -45px; left: 50%; transform: translateX(-50%) translateY(10px);
-      background: #2d3748; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem;
-      white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s; z-index: 10;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); font-weight: 700;
-    }
-    .bar-tooltip::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #2d3748; }
-
-    .day-label { position: absolute; bottom: 0; font-size: 0.75rem; font-weight: 700; color: #718096; text-transform: uppercase; }
+    .font-bold { font-weight: 700; }
+    .text-success { color: #38a169; }
+    .empty-state { padding: 3rem; text-align: center; color: #a0aec0; }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -135,50 +110,38 @@ export class DashboardComponent implements OnInit {
 
   orders = signal<Order[]>([]);
 
-  weeklySales = computed(() => {
-    const orders = this.orders().filter(o => o.status === 'PAGO');
-    const days = [];
-    const now = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(now.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      const total = orders
-        .filter(o => (o as any).created_at?.startsWith(dateStr))
-        .reduce((acc, o) => acc + this.calculateOrderTotal(o as any), 0);
-
-      days.push({
-        label: i === 0 ? 'Hoje' : date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
-        total
-      });
-    }
-    return days;
-  });
-
-  maxWeeklyRevenue = computed(() => {
-    const max = Math.max(...this.weeklySales().map(d => d.total));
-    return max > 0 ? max * 1.2 : 100; // 20% margin
+  recentOrders = computed(() => {
+    return [...this.orders()]
+      .filter(o => o.status === 'PAGO')
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 5);
   });
 
   todayRevenue = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return this.orders()
-      .filter(o => o.status === 'PAGO' && (o as any).created_at?.startsWith(today))
-      .reduce((acc, o) => acc + this.calculateOrderTotal(o as any), 0);
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    const filtered = this.orders().filter(o => {
+      const isPaid = o.status === 'PAGO';
+      const isToday = o.created_at?.startsWith(today);
+      return isPaid && isToday;
+    });
+
+    console.log('Today Revenue Debug:', { today, totalOrders: this.orders().length, filteredCount: filtered.length });
+    
+    return filtered.reduce((acc, o) => acc + this.calculateOrderTotal(o), 0);
   });
 
-  calculateOrderTotal(order: Order & { order_items?: any[] }): number {
+  calculateOrderTotal(order: Order): number {
     const items = order.order_items || [];
     return items.reduce((acc: number, item: any) => acc + (item.qtd * parseFloat(item.price)), 0);
   }
 
   activeOrdersCount = computed(() => this.orders().filter(o => o.status === 'ABERTO').length);
-
-  getPercentage(val: number): number {
-    return (val / this.maxWeeklyRevenue()) * 100;
-  }
 
   ngOnInit() {
     this.loadOrders();
@@ -186,7 +149,7 @@ export class DashboardComponent implements OnInit {
 
   async loadOrders() {
     try {
-      const response = await this.orderService.listOrders();
+      const response = await this.orderService.listOrders(100); // Busca as últimas 100 comandas
       this.orders.set(response.items || []);
     } catch (e) {
       console.error('Erro ao carregar comandas', e);

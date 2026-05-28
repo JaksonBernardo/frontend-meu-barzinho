@@ -34,13 +34,6 @@ import { AuthService } from '../../services/auth';
         </div>
 
         <nav>
-          <div class="nav-item" [class.active]="activePage === 'dashboard'" routerLink="/dashboard">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-            </svg>
-            Dashboard
-          </div>
-
           <div class="nav-item" [class.active]="activePage === 'orders'" routerLink="/orders">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
@@ -132,15 +125,14 @@ import { AuthService } from '../../services/auth';
       height: 100vh;
       background: white;
       border-right: 1px solid #e2e8f0;
-      padding: 2rem 1.5rem;
       display: flex;
       flex-direction: column;
       position: fixed;
       top: 0;
       left: 0;
-      overflow: hidden;
       z-index: 1000;
       transition: transform 0.3s ease;
+      overflow: hidden;
     }
 
     .mobile-toggle {
@@ -189,9 +181,8 @@ import { AuthService } from '../../services/auth';
     .sidebar-content {
       flex: 1;
       overflow-y: auto;
-      min-height: 0;
-
-      padding-right: 0.25rem;
+      overflow-x: hidden;
+      padding: 2rem 1.5rem 1rem;
     }
 
     .logo {
@@ -302,12 +293,8 @@ import { AuthService } from '../../services/auth';
 
     .sidebar-footer {
       flex-shrink: 0;
-
-      padding-top: 1.5rem;
-
-      margin-top: 2.0rem;
+      padding: 1.5rem;
       border-top: 1px solid #e2e8f0;
-
       background: white;
     }
 

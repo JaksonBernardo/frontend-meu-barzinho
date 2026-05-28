@@ -9,8 +9,10 @@ export interface Order {
   status?: 'ABERTO' | 'PAGO' | 'CANCELADO';
   type_discount?: 'FIXO' | 'PERCENTUAL';
   discount?: number;
-  payment_form: 'DINHEIRO' | 'PIX' | 'DEBITO' | 'CREDITO';
+  payment_form?: 'DINHEIRO' | 'PIX' | 'DEBITO' | 'CREDITO';
   company_id: number;
+  created_at?: string;
+  order_items?: any[];
 }
 
 @Injectable({
@@ -96,10 +98,11 @@ export class OrderService {
     }
   }
 
-  async listOrders(): Promise<any> {
+  async listOrders(limit: number = 20, offset: number = 0): Promise<any> {
     try {
       return await firstValueFrom(
         this.http.get<any>(`${this.apiUrl}/api/v1/orders/`, {
+          params: { limit, offset },
           withCredentials: true
         })
       );

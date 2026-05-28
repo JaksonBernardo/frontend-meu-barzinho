@@ -18,11 +18,6 @@ export const routes: Routes = [
     component: HomeComponent
   },
   { path: 'login', component: LoginComponent },
-  { 
-    path: 'dashboard', 
-    component: DashboardComponent,
-    canActivate: [authGuard] 
-  },
   {
     path: 'clients',
     component: ClientsComponent,
