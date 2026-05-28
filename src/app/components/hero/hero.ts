@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-hero',
   standalone: true,
+  imports: [RouterLink],
   template: `
     <section class="hero">
       <div class="container">
@@ -10,8 +12,7 @@ import { Component } from '@angular/core';
           <h1>Organização e <span>Clareza</span> para o seu Barzinho</h1>
           <p>Gerencie espetinhos, pastéis e bebidas com uma plataforma intuitiva desenhada para pequenos negócios que buscam profissionalismo.</p>
           <div class="actions">
-            <button class="btn-main">Começar Agora</button>
-            <button class="btn-outline">Ver Demonstração</button>
+            <button class="btn-main" routerLink="/register">Começar Agora</button>
           </div>
         </div>
         <div class="hero-image">

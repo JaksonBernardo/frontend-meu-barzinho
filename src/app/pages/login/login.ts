@@ -89,7 +89,7 @@ import { AuthService } from '../../services/auth';
         </form>
 
         <footer class="card-footer">
-          <p>Ainda não tem uma conta? <a href="#">Cadastre seu barzinho</a></p>
+          <p>Ainda não tem uma conta? <a routerLink="/register">Cadastre seu barzinho</a></p>
         </footer>
       </div>
     </div>

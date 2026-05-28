@@ -39,7 +39,7 @@ import { Component } from '@angular/core';
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2024 Meu Barzinho. Todos os direitos reservados.</p>
+          <p>&copy; 2026 Meu Barzinho. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

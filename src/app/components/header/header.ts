@@ -23,7 +23,6 @@ import { RouterLink } from '@angular/router';
         </div>
         <nav class="nav">
           <a href="#features">Recursos</a>
-          <a href="#solution">Solução</a>
           <button class="btn-primary" routerLink="/login">Acessar Plataforma</button>
         </nav>
       </div>

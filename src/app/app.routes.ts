@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home';
 import { LoginComponent } from './pages/login/login';
-import { DashboardComponent } from './pages/dashboard/dashboard';
+import { RegisterComponent } from './pages/register/register';
 import { ClientsComponent } from './pages/clients/clients';
 import { CategoriesComponent } from './pages/categories/categories';
 import { ItemsComponent } from './pages/items/items';
@@ -18,8 +18,10 @@ export const routes: Routes = [
     component: HomeComponent
   },
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
   {
     path: 'clients',
+
     component: ClientsComponent,
     canActivate: [authGuard]
   },
