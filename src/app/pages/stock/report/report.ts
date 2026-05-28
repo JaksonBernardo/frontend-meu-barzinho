@@ -168,32 +168,34 @@ interface DailyData {
           <div class="table-header">
             <h2>Detalhamento das Operações</h2>
           </div>
-          <table *ngIf="mergedData().length > 0; else emptyState">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Item / Comanda</th>
-                <th>Operação</th>
-                <th>Qtd</th>
-                <th>Vlr Unitário</th>
-                <th>Vlr Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of mergedData()">
-                <td>{{ formatDate(item.date) }}</td>
-                <td class="item-name">{{ item.item_name }}</td>
-                <td>
-                  <span class="badge" [class.badge-entry]="item.type === 'ENTRY'" [class.badge-exit]="item.type === 'SALE'">
-                    {{ item.type === 'ENTRY' ? 'Entrada (Custo)' : 'Venda (Receita)' }}
-                  </span>
-                </td>
-                <td>{{ item.qtd }}</td>
-                <td>{{ item.price | currency:'BRL' }}</td>
-                <td class="font-bold">{{ item.total | currency:'BRL' }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-wrapper">
+            <table *ngIf="mergedData().length > 0; else emptyState">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Item / Comanda</th>
+                  <th>Operação</th>
+                  <th>Qtd</th>
+                  <th>Vlr Unitário</th>
+                  <th>Vlr Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of mergedData()">
+                  <td>{{ formatDate(item.date) }}</td>
+                  <td class="item-name">{{ item.item_name }}</td>
+                  <td>
+                    <span class="badge" [class.badge-entry]="item.type === 'ENTRY'" [class.badge-exit]="item.type === 'SALE'">
+                      {{ item.type === 'ENTRY' ? 'Entrada (Custo)' : 'Venda (Receita)' }}
+                    </span>
+                  </td>
+                  <td>{{ item.qtd }}</td>
+                  <td>{{ item.price | currency:'BRL' }}</td>
+                  <td class="font-bold">{{ item.total | currency:'BRL' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <ng-template #emptyState>
             <div class="empty-state">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="empty-icon">

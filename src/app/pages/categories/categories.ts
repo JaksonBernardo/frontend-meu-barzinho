@@ -16,58 +16,60 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
 
       <main class="content">
         <header class="content-header">
-          <div>
+          <div class="header-title">
             <h1>Categorias</h1>
             <p>Gerencie as categorias de produtos do seu barzinho.</p>
           </div>
-          <div style="display: flex; gap: 1rem;">
-            <input type="text" placeholder="Pesquisar categoria..." (input)="onSearch($event)" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;">
+          <div class="header-actions">
+            <input type="text" placeholder="Pesquisar categoria..." (input)="onSearch($event)">
             <button class="btn-primary" (click)="openModal()">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Nova Categoria
+              <span>Nova Categoria</span>
             </button>
           </div>
         </header>
 
-        <div class="table-container">
-          <table *ngIf="categories().length > 0; else emptyState">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th style="width: 100px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let category of categories()">
-                <td>{{ category.name }}</td>
-                <td>
-                  <button class="btn-icon" (click)="editCategory(category)">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                    </svg>
-                  </button>
-                  <button class="btn-icon" (click)="deleteCategory(category.id!)">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="color: #e53e3e;">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.12-2.212a48.625 48.625 0 0 0-6.76 0c-1.21.048-2.12 1.032-2.12 2.212v.916m7.5 0" />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <ng-template #emptyState>
-            <div class="empty-state">
-              <p>Nenhuma categoria encontrada.</p>
-            </div>
-          </ng-template>
+        <div class="table-wrapper">
+          <div class="table-container">
+            <table *ngIf="categories().length > 0; else emptyState">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th style="width: 100px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let category of categories()">
+                  <td>{{ category.name }}</td>
+                  <td>
+                    <button class="btn-icon" (click)="editCategory(category)">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                      </svg>
+                    </button>
+                    <button class="btn-icon" (click)="deleteCategory(category.id!)">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="color: #e53e3e;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.12-2.212a48.625 48.625 0 0 0-6.76 0c-1.21.048-2.12 1.032-2.12 2.212v.916m7.5 0" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #emptyState>
+              <div class="empty-state">
+                <p>Nenhuma categoria encontrada.</p>
+              </div>
+            </ng-template>
 
-          <div class="pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid #e2e8f0; background: #f7fafc;">
-            <span style="font-size: 0.875rem; color: #718096;">Total: {{ totalCategories() }}</span>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn-secondary" (click)="prevPage()" [disabled]="offset() === 0">Anterior</button>
-              <button class="btn-secondary" (click)="nextPage()" [disabled]="offset() + limit() >= totalCategories()">Próximo</button>
+            <div class="pagination">
+              <span>Total: {{ totalCategories() }}</span>
+              <div class="pagination-buttons">
+                <button class="btn-secondary" (click)="prevPage()" [disabled]="offset() === 0">Anterior</button>
+                <button class="btn-secondary" (click)="nextPage()" [disabled]="offset() + limit() >= totalCategories()">Próximo</button>
+              </div>
             </div>
           </div>
         </div>
@@ -140,42 +142,522 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     </div>
   `,
   styles: [`
-    .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 320px; }
-    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    h1 { font-size: 2rem; font-weight: 800; color: #1a202c; margin-bottom: 0.5rem; }
-    .content-header p { color: #718096; }
+      :host {
+        display: block;
+        width: 100%;
+      }
 
-    .btn-primary { background: #3182ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: background 0.2s; }
-    .btn-primary:hover { background: #2b6cb0; }
-    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
-    .btn-secondary { background: #edf2f7; color: #4a5568; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-    
-    .table-container { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #f7fafc; padding: 1rem; text-align: left; font-size: 0.875rem; color: #718096; border-bottom: 1px solid #e2e8f0; }
-    td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #1a202c; }
-    .btn-icon { background: none; border: none; color: #718096; cursor: pointer; padding: 0.25rem; }
-    .btn-icon:hover { color: #3182ce; }
-    .btn-icon svg { width: 1.25rem; height: 1.25rem; }
-    .empty-state { padding: 3rem; text-align: center; color: #718096; }
+      * {
+        box-sizing: border-box;
+      }
 
-    /* Modal Styles */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal { background: white; border-radius: 1rem; width: 500px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-    .modal header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .btn-close { background: none; border: none; color: #a0aec0; cursor: pointer; }
-    .btn-close svg { width: 1.5rem; height: 1.5rem; }
+      .dashboard-container {
+        display: flex;
+        min-height: 100vh;
+        background: #f7fafc;
+      }
 
-    .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-    .form-group.full-width { grid-column: span 1; }
-    .form-group label { font-size: 0.875rem; font-weight: 600; color: #4a5568; }
-    .form-group input { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; }
-    .form-group input:focus { outline: none; border-color: #3182ce; ring: 2px solid #ebf8ff; }
-    
-    .error-message { margin-top: 1rem; color: #e53e3e; font-size: 0.875rem; font-weight: 500; }
-    .modal-footer { margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; }
+      /* ===== CONTENT ===== */
+
+      .content {
+        flex: 1;
+        width: 100%;
+        overflow-x: hidden;
+        padding: 2rem;
+      }
+
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .header-title {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .header-title h1 {
+        margin: 0 0 0.5rem;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1a202c;
+        line-height: 1.2;
+        word-break: break-word;
+      }
+
+      .content-header p {
+        margin: 0;
+        color: #718096;
+        font-size: 0.95rem;
+      }
+
+      /* ===== ACTIONS ===== */
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .header-actions input {
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+      }
+
+      .header-actions input:focus {
+        outline: none;
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+      }
+
+      /* ===== BUTTONS ===== */
+
+      .btn-primary,
+      .btn-secondary {
+        min-height: 48px;
+        border: none;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #3182ce;
+        color: #fff;
+        padding: 0 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+
+      .btn-primary:hover {
+        background: #2b6cb0;
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .btn-primary svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .btn-secondary {
+        background: #edf2f7;
+        color: #4a5568;
+        padding: 0 1.25rem;
+      }
+
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      /* ===== TABLE ===== */
+
+      .table-wrapper {
+        width: 100%;
+        background: #fff;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow:
+          0 4px 6px -1px rgba(0,0,0,0.08),
+          0 2px 4px -1px rgba(0,0,0,0.04);
+      }
+
+      .table-container {
+        width: 100%;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f7fafc;
+      }
+
+      th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #718096;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        color: #1a202c;
+        vertical-align: middle;
+      }
+
+      tbody tr {
+        transition: background 0.2s ease;
+      }
+
+      tbody tr:hover {
+        background: #f8fbff;
+      }
+
+      /* ===== ICON BUTTONS ===== */
+
+      .btn-icon {
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 0.75rem;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-icon:hover {
+        background: #edf2f7;
+      }
+
+      .btn-icon svg {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      /* ===== EMPTY ===== */
+
+      .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        color: #718096;
+      }
+
+      /* ===== PAGINATION ===== */
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .pagination-buttons {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      /* ===== MODAL ===== */
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal {
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow:
+          0 20px 25px -5px rgba(0,0,0,0.1),
+          0 10px 10px -5px rgba(0,0,0,0.04);
+      }
+
+      .modal header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .modal h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1a202c;
+      }
+
+      .btn-close {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 0.75rem;
+        background: transparent;
+        color: #718096;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-close:hover {
+        background: #edf2f7;
+      }
+
+      .btn-close svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* ===== FORM ===== */
+
+      .form-grid {
+        display: grid;
+        gap: 1.25rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .form-group.full-width {
+        width: 100%;
+      }
+
+      .form-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      .form-group input {
+        width: 100%;
+        min-height: 48px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background: #fff;
+        font-size: 16px;
+        transition: all 0.2s ease;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+      }
+
+      /* ===== MESSAGES ===== */
+
+      .error-message {
+        margin-top: 1rem;
+        color: #e53e3e;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .success-message {
+        margin-top: 1rem;
+        color: #38a169;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      /* ===== MODAL FOOTER ===== */
+
+      .modal-footer {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      /* ===== TABLET ===== */
+
+      @media (max-width: 1024px) {
+        .content {
+          padding: 1.5rem;
+        }
+
+        .content-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .header-actions {
+          width: 100%;
+        }
+
+        .header-actions input {
+          padding: 0.75rem;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+        }
+      }
+
+      /* ===== MOBILE ===== */
+
+      @media (max-width: 768px) {
+
+        .content {
+          padding:
+            5.5rem
+            1rem
+            1rem
+            1rem;
+        }
+
+        .content-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1.25rem;
+          margin-top: 0.5rem;
+        }
+
+        .header-title h1 {
+          font-size: 1.6rem;
+          line-height: 1.3;
+          padding-right: 0.5rem;
+        }
+
+        .content-header p {
+          font-size: 0.9rem;
+        }
+
+        .header-actions {
+          flex-direction: column;
+          align-items: stretch;
+          width: 100%;
+        }
+
+        .header-actions input,
+        .btn-primary {
+          width: 100%;
+        }
+
+        .btn-primary {
+          height: 50px;
+        }
+
+        /* ===== MOBILE TABLE => CARDS ===== */
+
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+          width: 100%;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody {
+          padding: 1rem;
+        }
+
+        tr {
+          background: #fff;
+          border: 1px solid #edf2f7;
+          border-radius: 1rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        td {
+          border: none;
+          padding: 0;
+        }
+
+        td:first-child {
+          margin-bottom: 1rem;
+          font-size: 1rem;
+          font-weight: 700;
+          word-break: break-word;
+        }
+
+        td:last-child {
+          display: flex;
+          gap: 0.75rem;
+        }
+
+        .btn-icon {
+          flex: 1;
+          height: 48px;
+          background: #f7fafc;
+        }
+
+        .pagination {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .pagination-buttons {
+          width: 100%;
+        }
+
+        .pagination-buttons button {
+          flex: 1;
+        }
+
+        .modal {
+          padding: 1.25rem;
+          border-radius: 1rem;
+        }
+
+        .modal-footer {
+          flex-direction: column-reverse;
+        }
+
+        .modal-footer button {
+          width: 100%;
+        }
+      }
+
+      /* ===== SMALL MOBILE ===== */
+
+      @media (max-width: 480px) {
+
+        .content {
+          padding:
+            5.2rem
+            0.75rem
+            0.75rem
+            0.75rem;
+        }
+
+        .header-title h1 {
+          font-size: 1.4rem;
+        }
+
+        .table-wrapper {
+          border-radius: 0.75rem;
+        }
+
+        tr {
+          padding: 0.875rem;
+        }
+
+        .modal {
+          padding: 1rem;
+        }
+      }
   `]
 })
 export class CategoriesComponent implements OnInit {

@@ -62,32 +62,303 @@ import { MessageModalComponent } from '../../../components/message-modal/message
     </div>
   `,
   styles: [`
-    .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 320px; }
-    .content-header { margin-bottom: 2rem; }
-    h1 { font-size: 2rem; font-weight: 800; color: #1a202c; margin-bottom: 0.5rem; }
-    .content-header p { color: #718096; }
-    .form-container { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); width: 95%; }
-    .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
-    label { font-size: 0.875rem; font-weight: 600; color: #4a5568; }
-    input { padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
-    .btn-primary { background: #3182ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-    .autocomplete-container { position: relative; }
-    .suggestions { 
-      position: absolute; 
-      top: calc(100% + 0.25rem); 
-      left: 0; 
-      right: 0; 
-      background: white; 
-      border: 1px solid #e2e8f0; 
-      border-radius: 0.5rem; 
-      z-index: 1001; 
-      max-height: 200px; 
-      overflow-y: auto; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+    :host {
+      display: block;
+      width: 100%;
     }
-    .suggestions div { padding: 0.75rem; cursor: pointer; }
-    .suggestions div:hover { background: #f7fafc; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+      background: #f7fafc;
+    }
+
+    /* ===== CONTENT ===== */
+
+    .content {
+      flex: 1;
+      width: 100%;
+      overflow-x: hidden;
+      padding: 2rem;
+    }
+
+    /* ===== HEADER ===== */
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .content-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1a202c;
+      line-height: 1.2;
+    }
+
+    .content-header p {
+      margin: 0;
+      color: #718096;
+      font-size: 0.95rem;
+    }
+
+    /* ===== FORM CONTAINER ===== */
+
+    .form-container {
+      width: 100%;
+      background: #fff;
+      border-radius: 1.25rem;
+      padding: 2rem;
+      box-shadow:
+        0 10px 15px -3px rgba(0,0,0,0.06),
+        0 4px 6px -2px rgba(0,0,0,0.03);
+      border: 1px solid #edf2f7;
+    }
+
+    /* ===== FORM ===== */
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ===== FORM GROUP ===== */
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+
+    .form-group label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #4a5568;
+    }
+
+    /* ===== INPUTS ===== */
+
+    .form-group input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.9rem;
+      background: #fff;
+      padding: 0 1rem;
+      font-size: 16px;
+      color: #1a202c;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .form-group input::placeholder {
+      color: #a0aec0;
+    }
+
+    .form-group input:hover {
+      border-color: #cbd5e0;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.14);
+    }
+
+    /* ===== AUTOCOMPLETE ===== */
+
+    .autocomplete-container {
+      position: relative;
+      grid-column: span 2;
+    }
+
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 0.45rem);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      overflow: hidden;
+      z-index: 1000;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow:
+        0 10px 15px -3px rgba(0,0,0,0.08),
+        0 4px 6px -2px rgba(0,0,0,0.04);
+    }
+
+    .suggestions div {
+      padding: 0.95rem 1rem;
+      cursor: pointer;
+      transition: background 0.18s ease;
+      color: #1a202c;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #f7fafc;
+    }
+
+    .suggestions div:last-child {
+      border-bottom: none;
+    }
+
+    .suggestions div:hover {
+      background: #f7fafc;
+    }
+
+    /* ===== BUTTON ===== */
+
+    .btn-primary {
+      grid-column: span 2;
+
+      height: 54px;
+      border: none;
+      border-radius: 1rem;
+
+      background: #3182ce;
+      color: #fff;
+
+      font-size: 0.96rem;
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition:
+        background 0.2s ease,
+        transform 0.15s ease,
+        opacity 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: #2b6cb0;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.99);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+
+    .form-group:nth-child(2),
+    .form-group:nth-child(3),
+    .form-group:nth-child(4),
+    .form-group:nth-child(5) {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+
+    /* ===== MOBILE ===== */
+
+    @media (max-width: 768px) {
+
+      .content {
+        padding:
+          5.5rem
+          1rem
+          1rem
+          1rem;
+      }
+
+      .content-header {
+        margin-top: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .content-header h1 {
+        font-size: 1.6rem;
+        line-height: 1.3;
+        padding-right: 0.5rem;
+      }
+
+      .content-header p {
+        font-size: 0.9rem;
+      }
+
+      .form-container {
+        padding: 1.25rem;
+        border-radius: 1rem;
+      }
+
+      form {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .autocomplete-container,
+      .btn-primary {
+        grid-column: span 1;
+      }
+
+      .form-group:nth-child(2),
+      .form-group:nth-child(3),
+      .form-group:nth-child(4),
+      .form-group:nth-child(5) {
+        padding: 0.85rem;
+        border-radius: 0.9rem;
+      }
+
+      .form-group input {
+        height: 50px;
+      }
+
+      .btn-primary {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      .suggestions {
+        max-height: 220px;
+      }
+    }
+
+    /* ===== SMALL MOBILE ===== */
+
+    @media (max-width: 480px) {
+
+      .content {
+        padding:
+          5.2rem
+          0.75rem
+          0.75rem
+          0.75rem;
+      }
+
+      .content-header h1 {
+        font-size: 1.4rem;
+      }
+
+      .form-container {
+        padding: 1rem;
+        border-radius: 0.9rem;
+      }
+
+      .form-group input {
+        font-size: 15px;
+      }
+
+      .btn-primary {
+        height: 52px;
+      }
+    }
   `]
 })
 export class EntriesComponent implements OnInit {

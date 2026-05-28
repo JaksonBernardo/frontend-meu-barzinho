@@ -1,1 +1,33 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+  --sidebar-width: 280px;
+  --content-padding: 3rem;
+  --sidebar-margin: 320px;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-margin: 0;
+    --content-padding: 1.5rem;
+  }
+}
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f7fafc;
+}
+
+.content {
+  flex: 1;
+  padding: var(--content-padding);
+  margin-left: var(--sidebar-margin);
+  transition: margin-left 0.3s ease, padding 0.3s ease;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding-top: 5rem;
+  }
+}

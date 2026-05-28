@@ -69,8 +69,16 @@ import { SidebarComponent } from '../../components/sidebar/sidebar';
     </div>
   `,
   styles: [`
-    .dashboard-container { display: flex; min-height: 100vh; background: #f7fafc; }
-    .content { flex: 1; padding: 3rem; margin-left: 320px; max-width: 1200px; }
+    @media (max-width: 640px) {
+      h1 { font-size: 1.75rem; }
+      .stat-card .value { font-size: 1.75rem; }
+      .chart-section { padding: 1.5rem; }
+      .bar-chart-container { gap: 0.5rem; height: 250px; }
+      .chart-y-axis { min-width: 50px; font-size: 0.65rem; }
+      .bar { width: 25px; }
+      .day-label { font-size: 0.6rem; }
+    }
+
     .content-header { margin-bottom: 2.5rem; }
     h1 { font-size: 2.25rem; font-weight: 900; color: #1a202c; letter-spacing: -0.025em; margin: 0; }
     .content-header p { color: #718096; font-size: 1.1rem; }

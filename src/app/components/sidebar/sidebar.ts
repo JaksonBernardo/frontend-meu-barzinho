@@ -8,7 +8,20 @@ import { AuthService } from '../../services/auth';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <aside class="sidebar">
+    <!-- Botão Hamburguer para Mobile -->
+    <button class="mobile-toggle" (click)="toggleSidebar()">
+      <svg *ngIf="!sidebarOpen()" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+      <svg *ngIf="sidebarOpen()" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Overlay para fechar ao clicar fora no mobile -->
+    <div class="sidebar-overlay" *ngIf="sidebarOpen()" (click)="toggleSidebar()"></div>
+
+    <aside class="sidebar" [class.mobile-open]="sidebarOpen()">
       <div class="sidebar-content">
         <div class="logo">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-logo">
@@ -116,22 +129,61 @@ import { AuthService } from '../../services/auth';
   styles: [`
     .sidebar {
       width: 280px;
-      height: 92%;
-
+      height: 100vh;
       background: white;
       border-right: 1px solid #e2e8f0;
-
       padding: 2rem 1.5rem;
-
       display: flex;
       flex-direction: column;
-
       position: fixed;
       top: 0;
       left: 0;
-
       overflow: hidden;
       z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .mobile-toggle svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      .mobile-toggle {
+        display: flex;
+      }
+      .sidebar-overlay {
+        display: block;
+      }
     }
 
     .sidebar-content {
@@ -311,9 +363,14 @@ export class SidebarComponent {
   private readonly router = inject(Router);
 
   estoqueOpen = signal(false);
+  sidebarOpen = signal(false);
 
   toggleEstoque() {
     this.estoqueOpen.update(v => !v);
+  }
+
+  toggleSidebar() {
+    this.sidebarOpen.update(v => !v);
   }
 
   async onLogout() {

@@ -87,6 +87,18 @@ import { RouterLink } from '@angular/router';
     .btn-primary:hover {
       background: #2b6cb0;
     }
+
+    @media (max-width: 640px) {
+      .nav a {
+        display: none;
+      }
+      .container {
+        padding: 0 1rem;
+      }
+      .logo span {
+        display: none;
+      }
+    }
   `]
 })
 export class HeaderComponent {}
